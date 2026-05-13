@@ -1,0 +1,99 @@
+name: PR to main
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: pr-main-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch latest main from base repository
+        run: |
+          git fetch "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" main
+
+      - name: Require package.json version bump vs main
+        run: |
+          MAIN_VER=$(git show FETCH_HEAD:package.json | jq -r .version)
+          HEAD_VER=$(jq -r .version package.json)
+          echo "Version on main: $MAIN_VER"
+          echo "Version on PR head: $HEAD_VER"
+          if [ "$MAIN_VER" = "$HEAD_VER" ]; then
+            echo "::error::package.json version must differ from main ($MAIN_VER). Bump the version for this PR."
+            exit 1
+          fi
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Biome check --write (same-repo PRs only)
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: bun run check:write
+
+      - name: Biome check (fork PRs — no auto-fix)
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: bun run check
+
+      - name: Commit Biome fixes
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No Biome changes."
+          else
+            git commit -m "🤖 biome fix"
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/${{ github.event.pull_request.head.ref }}"
+          fi
+
+      - name: Build
+        run: bun run build
+
+      - name: Commit build artifacts
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No build output changes."
+          else
+            git commit -m "🤖 build files"
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/${{ github.event.pull_request.head.ref }}"
+          fi
+
+      - name: Fail if fork PR needs formatting or fixes
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Working tree dirty after check/build. Run \`bun run check:write\` and \`bun run build\` locally, commit results (including dist if tracked), and push."
+            git status
+            git diff
+            exit 1
+          fi
+
+      - name: Test
+        run: bun test

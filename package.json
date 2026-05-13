@@ -1,0 +1,35 @@
+{
+  "name": "always-panic",
+  "version": "0.1.0",
+  "description": "Typed errors for typescript.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "format": "biome format --write",
+    "lint": "biome lint --write",
+    "check": "biome check",
+    "check:write": "biome check --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.14",
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "license": "MIT",
+  "keywords": [
+    "typescript",
+    "bun"
+  ]
+}

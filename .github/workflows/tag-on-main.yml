@@ -1,0 +1,36 @@
+name: Tag release on main
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push version tag
+        env:
+          TAG_MESSAGE_PREFIX: Release
+        run: |
+          VERSION=$(jq -r .version package.json)
+          TAG="v${VERSION}"
+
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
+            echo "::error::Tag ${TAG} already exists on the remote. Bump package.json version before merging, or delete the tag if this was a mistake."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "${TAG}" -m "${TAG_MESSAGE_PREFIX} ${TAG}"
+          git push origin "refs/tags/${TAG}"
