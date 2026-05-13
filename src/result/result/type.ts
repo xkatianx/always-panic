@@ -1,5 +1,5 @@
-import type Err from './err'
-import type Ok from './ok'
+import type Err from './err.js'
+import type Ok from './ok.js'
 
 export type OkContent<T> = T extends Ok<infer U> ? U : never
 export type ErrContent<T> = T extends Err<infer U> ? U : never
