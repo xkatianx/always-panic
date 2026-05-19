@@ -1,525 +1,1183 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { describe, expect, expectTypeOf, it, mock } from 'bun:test'
 import { err, ok, type Result } from '../index.js'
+import Err from './err.js'
+import Ok from './ok.js'
+import util from './util.js'
+
+type T1 = { T1: number }
+type T2 = { T2: number }
+type T3 = { T3: number }
+type T4 = { T4: number }
+
+const t1: T1 = { T1: 1 }
+const t2: T2 = { T2: 2 }
+const t3: T3 = { T3: 3 }
+const t4: T4 = { T4: 4 }
 
 describe('Result', () => {
-  describe('Ok', () => {
-    it('should create an Ok value', () => {
-      const result = ok(42)
-      expect(result.isOk()).toBe(true)
-      expect(result.isErr()).toBe(false)
-      expect(result.unwrap()).toBe(42)
-    })
-  })
-
-  describe('Err', () => {
-    it('should create an Err value', () => {
-      const result = err('error message')
-      expect(result.isOk()).toBe(false)
-      expect(result.isErr()).toBe(true)
+  describe('isOk and isErr', () => {
+    it('Ok is Ok', () => {
+      expect(new Ok(t1).isOk()).toBe(true)
     })
 
-    it('should throw on unwrap', () => {
-      const result = err('error message')
-      expect(result.unwrapErr()).toBe('error message')
+    it('Ok is not Err', () => {
+      expect(new Ok(t1).isErr()).toBe(false)
+    })
+
+    it('Err is Err', () => {
+      expect(new Err(t1).isErr()).toBe(true)
+    })
+
+    it('Err is not Ok', () => {
+      expect(new Err(t1).isOk()).toBe(false)
+    })
+
+    it('Narrows type', () => {
+      const result = null as Result<T1, T2> | null
+      if (result?.isOk()) {
+        expectTypeOf(result).toEqualTypeOf<Ok<T1>>()
+      }
+      if (result?.isErr()) {
+        expectTypeOf(result).toEqualTypeOf<Err<T2>>()
+      }
     })
   })
 
   describe('expect', () => {
+    const expectMessage = 'expect failed'
     it('should work with Ok', () => {
-      const okResult = ok('value')
-      expect(okResult.expect('should not be used')).toBe('value')
+      {
+        const result = new Ok(t1)
+        const expected = result.expect(expectMessage)
+        expect(expected).toEqual(t1)
+        expectTypeOf(expected).toEqualTypeOf<T1>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      expect(() => errResult.expect('expected failure')).toThrow(
-        'expected failure',
-      )
+      {
+        const result = new Err(t2)
+        expect(() => result.expect(expectMessage)).toThrow(expectMessage)
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<string, number> = ok('value')
-      expect(result.expect('should not be used')).toBe('value')
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const expected = result.expect(expectMessage)
+        expect(expected).toEqual(t1)
+        expectTypeOf(expected).toEqualTypeOf<T1>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<string, number> = err(42)
-      expect(() => result.expect('expected failure')).toThrow(
-        'expected failure',
-      )
+      {
+        const result: Result<T1, T2> = err(t2)
+        expect(() => result.expect(expectMessage)).toThrow(expectMessage)
+      }
     })
   })
 
   describe('unwrap', () => {
     it('should work with Ok', () => {
-      const okResult = ok('value')
-      expect(okResult.unwrap()).toBe('value')
+      {
+        const result = new Ok(t1)
+        const unwrapped = result.unwrap()
+        expect(unwrapped).toEqual(t1)
+        expectTypeOf(unwrapped).toEqualTypeOf<T1>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      expect(() => errResult.unwrap()).toThrow(
-        'Called unwrap() on an Err value: boom',
-      )
+      {
+        const result = new Err(t2)
+        expect(() => result.unwrap()).toThrow()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<string, number> = ok('value')
-      expect(result.unwrap()).toBe('value')
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const unwrapped = result.unwrap()
+        expect(unwrapped).toEqual(t1)
+        expectTypeOf(unwrapped).toEqualTypeOf<T1>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<string, number> = err(42)
-      expect(() => result.unwrap()).toThrow()
+      {
+        const result: Result<T1, T2> = err(t2)
+        expect(() => result.unwrap()).toThrow()
+      }
     })
   })
 
   describe('unwrapErr', () => {
     it('should work with Ok', () => {
-      const okResult = ok('value')
-      expect(() => okResult.unwrapErr()).toThrow(
-        'Called unwrapErr() on an Ok value: value',
-      )
+      {
+        const result = new Ok(t1)
+        expect(() => result.unwrapErr()).toThrow()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      expect(errResult.unwrapErr()).toBe('boom')
+      {
+        const result = new Err(t2)
+        const unwrappedErr = result.unwrapErr()
+        expect(unwrappedErr).toEqual(t2)
+        expectTypeOf(unwrappedErr).toEqualTypeOf<T2>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<string, number> = ok('value')
-      expect(() => result.unwrapErr()).toThrow()
+      {
+        const result: Result<T1, T2> = ok(t1)
+        expect(() => result.unwrapErr()).toThrow()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<string, number> = err(42)
-      expect(result.unwrapErr()).toBe(42)
+      {
+        const result: Result<T1, T2> = err(t2)
+        const unwrappedErr = result.unwrapErr()
+        expect(unwrappedErr).toEqual(t2)
+        expectTypeOf(unwrappedErr).toEqualTypeOf<T2>()
+      }
     })
   })
 
   describe('unwrapOr', () => {
     it('should work with Ok', () => {
-      const okResult = ok(42)
-      expect(okResult.unwrapOr(0)).toBe(42)
+      {
+        const result = new Ok(t1)
+        const unwrapped = result.unwrapOr(t2)
+        expect(unwrapped).toEqual(t1)
+        expectTypeOf(unwrapped).toEqualTypeOf<T1>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('error message')
-      expect(errResult.unwrapOr(42)).toBe(42)
+      {
+        const result = new Err(t1)
+        const unwrapped = result.unwrapOr(t2)
+        expect(unwrapped).toEqual(t2)
+        expectTypeOf(unwrapped).toEqualTypeOf<T2>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(10)
-      expect(result.unwrapOr(0)).toBe(10)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const unwrapped = result.unwrapOr(t3)
+        expect(unwrapped).toEqual(t1)
+        expectTypeOf(unwrapped).toEqualTypeOf<T1 | T3>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      expect(result.unwrapOr(0)).toBe(0)
+      {
+        const result: Result<T1, T2> = err(t2)
+        const unwrapped = result.unwrapOr(t3)
+        expect(unwrapped).toEqual(t3)
+        expectTypeOf(unwrapped).toEqualTypeOf<T1 | T3>()
+      }
     })
   })
 
   describe('unwrapOrElse', () => {
     it('should work with Ok', () => {
-      const okResult = ok(10)
-      const unwrappedOk = okResult.unwrapOrElse(() => 0)
-      expect(unwrappedOk).toBe(10)
+      {
+        const result = new Ok(t1)
+        const onErrT3 = mock(() => t3)
+        const unwrapped = result.unwrapOrElse(onErrT3)
+        expect(unwrapped).toEqual(t1)
+        expect(onErrT3).toHaveBeenCalledTimes(0)
+        expectTypeOf(unwrapped).toEqualTypeOf<T1>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      const unwrappedErr = errResult.unwrapOrElse((e) => `handled ${e}`)
-      expect(unwrappedErr).toBe('handled boom')
+      {
+        const result = new Err(t2)
+        const onErrT3 = mock(() => t3)
+        const unwrapped = result.unwrapOrElse(onErrT3)
+        expect(unwrapped).toEqual(t3)
+        expect(onErrT3).toHaveBeenCalledTimes(1)
+        expect(onErrT3).toHaveBeenCalledWith(t2)
+        expectTypeOf(unwrapped).toEqualTypeOf<T3>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(10)
-      const unwrapped = result.unwrapOrElse(() => 0)
-      expect(unwrapped).toBe(10)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const onErrT3 = mock(() => t3)
+        const unwrapped = result.unwrapOrElse(onErrT3)
+        expect(unwrapped).toEqual(t1)
+        expect(onErrT3).toHaveBeenCalledTimes(0)
+        expectTypeOf(unwrapped).toEqualTypeOf<T1 | T3>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const unwrapped = result.unwrapOrElse((e) => `handled ${e}`)
-      expect(unwrapped).toBe('handled error')
+      {
+        const result: Result<T1, T2> = err(t2)
+        const onErrT3 = mock(() => t3)
+        const unwrapped = result.unwrapOrElse(onErrT3)
+        expect(unwrapped).toEqual(t3)
+        expect(onErrT3).toHaveBeenCalledTimes(1)
+        expect(onErrT3).toHaveBeenCalledWith(t2)
+        expectTypeOf(unwrapped).toEqualTypeOf<T1 | T3>()
+      }
     })
   })
 
   describe('map', () => {
     it('should work with Ok', () => {
-      const okResult = ok(42)
-        .map((x) => x * 2)
-        .map((x) => x + 1)
-      expect(okResult.unwrap()).toBe(85)
+      {
+        const result = new Ok(t1)
+        const mapper = mock(() => t3)
+        const mapped = result.map(mapper)
+        expect(mapped.unwrap()).toEqual(t3)
+        expect(mapped).not.toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expectTypeOf(mapped).toEqualTypeOf<Ok<T3>>()
+      }
+      {
+        const result = new Ok(t1)
+        const mapper = mock(() => t4)
+        const mapped = result.map(mapper)
+        expect(mapped.unwrap()).toEqual(t4)
+        expect(mapped).not.toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expectTypeOf(mapped).toEqualTypeOf<Ok<T4>>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('error message').map((x) => x * 2)
-      expect(errResult.isErr()).toBe(true)
-      expect(errResult.unwrapErr()).toBe('error message')
+      {
+        const result = new Err(t2)
+        const mapper = mock(() => t3)
+        const mapped = result.map(mapper)
+        expect(mapped.unwrapErr()).toEqual(t2)
+        expect(mapped).toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<Err<T2>>()
+      }
+      {
+        const result = new Err(t2)
+        const mapper = mock(() => t4)
+        const mapped = result.map(mapper)
+        expect(mapped.unwrapErr()).toEqual(t2)
+        expect(mapped).toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<Err<T2>>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(5)
-      const mapped = result.map((x) => x * 2)
-      expect(mapped.isOk() && mapped.unwrap()).toBe(10)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const mapper = mock(() => t3)
+        const mapped = result.map(mapper)
+        expect(mapped.unwrap()).toEqual(t3)
+        expect(mapped).not.toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expectTypeOf(util.asIs(mapped)).toEqualTypeOf<Result<T3, T2>>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const mapper = mock(() => t4)
+        const mapped = result.map(mapper)
+        expect(mapped.unwrap()).toEqual(t4)
+        expect(mapped).not.toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expectTypeOf(util.asIs(mapped)).toEqualTypeOf<Result<T4, T2>>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const mapped = result.map((x) => x * 2)
-      expect(mapped.isErr()).toBe(true)
+      {
+        const result: Result<T1, T2> = err(t2)
+        const mapper = mock(() => t3)
+        const mapped = result.map(mapper)
+        expect(mapped.unwrapErr()).toEqual(t2)
+        expect(mapped).toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(mapped)).toEqualTypeOf<Result<T3, T2>>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const mapper = mock(() => t4)
+        const mapped = result.map(mapper)
+        expect(mapped.unwrapErr()).toEqual(t2)
+        expect(mapped).toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(mapped)).toEqualTypeOf<Result<T4, T2>>()
+      }
     })
   })
 
   describe('mapErr', () => {
     it('should work with Ok', () => {
-      const okResult = ok(42)
-        .mapErr(() => 'error')
-        .map((x) => x * 2)
-      expect(okResult.unwrap()).toBe(84)
-    })
-
-    it('should not call mapErr callback on Ok', () => {
-      const spy = mock()
-      const okResult = ok(7).mapErr(spy)
-      expect(okResult.isOk()).toBe(true)
-      expect(okResult.unwrap()).toBe(7)
-      expect(spy).not.toHaveBeenCalled()
+      {
+        const result = new Ok(t1)
+        const mapper = mock(() => t3)
+        const mapped = result.mapErr(mapper)
+        expect(mapped.unwrap()).toEqual(t1)
+        expect(mapped).toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<Ok<T1>>()
+      }
+      {
+        const result = new Ok(t1)
+        const mapper = mock(() => t4)
+        const mapped = result.mapErr(mapper)
+        expect(mapped.unwrap()).toEqual(t1)
+        expect(mapped).toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<Ok<T1>>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('error message').mapErr((e) => `new ${e}`)
-      expect(errResult.isErr()).toBe(true)
-      expect(errResult.unwrapErr()).toBe('new error message')
-    })
-
-    it('should allow chaining mapErr on Err', () => {
-      const errResult = err('boom')
-        .mapErr((e) => ({ code: 'E_BOOM', message: e }))
-        .mapErr((e) => `${e.code}:${e.message.toUpperCase()}`)
-      expect(errResult.isErr()).toBe(true)
-      expect(errResult.unwrapErr()).toBe('E_BOOM:BOOM')
+      {
+        const result = new Err(t2)
+        const mapper = mock(() => t3)
+        const mapped = result.mapErr(mapper)
+        expect(mapped.unwrapErr()).toEqual(t3)
+        expect(mapped).not.toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t2)
+        expectTypeOf(mapped).toEqualTypeOf<Err<T3>>()
+      }
+      {
+        const result = new Err(t2)
+        const mapper = mock(() => t4)
+        const mapped = result.mapErr(mapper)
+        expect(mapped.unwrapErr()).toEqual(t4)
+        expect(mapped).not.toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t2)
+        expectTypeOf(mapped).toEqualTypeOf<Err<T4>>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(5)
-      const mapped = result.mapErr((e) => `new ${e}`)
-      expect(mapped.isOk() && mapped.unwrap()).toBe(5)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const mapper = mock(() => t3)
+        const mapped = result.mapErr(mapper)
+        expect(mapped.unwrap()).toEqual(t1)
+        expect(mapped).toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(mapped)).toEqualTypeOf<Result<T1, T3>>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const mapper = mock(() => t4)
+        const mapped = result.mapErr(mapper)
+        expect(mapped.unwrap()).toEqual(t1)
+        expect(mapped).toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(mapped)).toEqualTypeOf<Result<T1, T4>>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const mapped = result.mapErr((e) => `new ${e}`)
-      expect(mapped.isErr() && mapped.unwrapErr()).toBe('new error')
+      {
+        const result: Result<T1, T2> = err(t2)
+        const mapper = mock(() => t3)
+        const mapped = result.mapErr(mapper)
+        expect(mapped.unwrapErr()).toEqual(t3)
+        expect(mapped).not.toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t2)
+        expectTypeOf(util.asIs(mapped)).toEqualTypeOf<Result<T1, T3>>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const mapper = mock(() => t4)
+        const mapped = result.mapErr(mapper)
+        expect(mapped.unwrapErr()).toEqual(t4)
+        expect(mapped).not.toBe(result)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t2)
+        expectTypeOf(util.asIs(mapped)).toEqualTypeOf<Result<T1, T4>>()
+      }
     })
   })
 
   describe('mapOr', () => {
     it('should work with Ok', () => {
-      const okResult = ok(10)
-      const mappedOrOk = okResult.mapOr(0, (x) => x * 3)
-      expect(mappedOrOk).toBe(30)
+      {
+        const result = new Ok(t1)
+        const mapper = mock(() => t3)
+        const mapped = result.mapOr(t4, mapper)
+        expect(mapped).toEqual(t3)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expectTypeOf(mapped).toEqualTypeOf<T3>()
+      }
+      {
+        const result = new Ok(t1)
+        const mapper = mock(() => t4)
+        const mapped = result.mapOr(t3, mapper)
+        expect(mapped).toEqual(t4)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expectTypeOf(mapped).toEqualTypeOf<T4>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      const mappedOrErr = errResult.mapOr(123, () => 'never called')
-      expect(mappedOrErr).toBe(123)
+      {
+        const result = new Err(t2)
+        const mapper = mock(() => t3)
+        const mapped = result.mapOr(t4, mapper)
+        expect(mapped).toEqual(t4)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T4>()
+      }
+      {
+        const result = new Err(t2)
+        const mapper = mock(() => t4)
+        const mapped = result.mapOr(t3, mapper)
+        expect(mapped).toEqual(t3)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(10)
-      const mapped = result.mapOr(0, (x) => x * 3)
-      expect(mapped).toBe(30)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const mapper = mock(() => t3)
+        const mapped = result.mapOr(t4, mapper)
+        expect(mapped).toEqual(t3)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expectTypeOf(mapped).toEqualTypeOf<T3 | T4>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const mapper = mock(() => t4)
+        const mapped = result.mapOr(t3, mapper)
+        expect(mapped).toEqual(t4)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expectTypeOf(mapped).toEqualTypeOf<T3 | T4>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const mapped = result.mapOr(0, (x) => x * 3)
-      expect(mapped).toBe(0)
+      {
+        const result: Result<T1, T2> = err(t2)
+        const mapper = mock(() => t3)
+        const mapped = result.mapOr(t4, mapper)
+        expect(mapped).toEqual(t4)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3 | T4>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const mapper = mock(() => t4)
+        const mapped = result.mapOr(t3, mapper)
+        expect(mapped).toEqual(t3)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3 | T4>()
+      }
     })
   })
 
   describe('mapOrElse', () => {
     it('should work with Ok', () => {
-      const okResult = ok(10)
-      const mappedOrElseOk = okResult.mapOrElse(
-        () => 0,
-        (x) => x * 4,
-      )
-      expect(mappedOrElseOk).toBe(40)
+      {
+        const result = new Ok(t1)
+        const defaultFn = mock(() => t4)
+        const mapper = mock(() => t3)
+        const mapped = result.mapOrElse(defaultFn, mapper)
+        expect(mapped).toEqual(t3)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expect(defaultFn).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3>()
+      }
+      {
+        const result = new Ok(t1)
+        const defaultFn = mock(() => t3)
+        const mapper = mock(() => t4)
+        const mapped = result.mapOrElse(defaultFn, mapper)
+        expect(mapped).toEqual(t4)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expect(defaultFn).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T4>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      const mappedOrElseErr = errResult.mapOrElse(
-        (e) => `default ${e}`,
-        () => 'never called',
-      )
-      expect(mappedOrElseErr).toBe('default boom')
+      {
+        const result = new Err(t2)
+        const defaultFn = mock(() => t4)
+        const mapper = mock(() => t3)
+        const mapped = result.mapOrElse(defaultFn, mapper)
+        expect(mapped).toEqual(t4)
+        expect(defaultFn).toHaveBeenCalledTimes(1)
+        expect(defaultFn).toHaveBeenCalledWith(t2)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T4>()
+      }
+      {
+        const result = new Err(t2)
+        const defaultFn = mock(() => t3)
+        const mapper = mock(() => t4)
+        const mapped = result.mapOrElse(defaultFn, mapper)
+        expect(mapped).toEqual(t3)
+        expect(defaultFn).toHaveBeenCalledTimes(1)
+        expect(defaultFn).toHaveBeenCalledWith(t2)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(10)
-      const mapped = result.mapOrElse(
-        (e) => `default ${e}`,
-        (x) => BigInt(x * 4),
-      )
-      expect(mapped).toBe(40n)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const defaultFn = mock(() => t4)
+        const mapper = mock(() => t3)
+        const mapped = result.mapOrElse(defaultFn, mapper)
+        expect(mapped).toEqual(t3)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expect(defaultFn).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3 | T4>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const defaultFn = mock(() => t3)
+        const mapper = mock(() => t4)
+        const mapped = result.mapOrElse(defaultFn, mapper)
+        expect(mapped).toEqual(t4)
+        expect(mapper).toHaveBeenCalledTimes(1)
+        expect(mapper).toHaveBeenCalledWith(t1)
+        expect(defaultFn).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3 | T4>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const mapped = result.mapOrElse(
-        (e) => `default ${e}`,
-        (x) => x * 4,
-      )
-      expect(mapped).toBe('default error')
+      {
+        const result: Result<T1, T2> = err(t2)
+        const defaultFn = mock(() => t4)
+        const mapper = mock(() => t3)
+        const mapped = result.mapOrElse(defaultFn, mapper)
+        expect(mapped).toEqual(t4)
+        expect(defaultFn).toHaveBeenCalledTimes(1)
+        expect(defaultFn).toHaveBeenCalledWith(t2)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3 | T4>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const defaultFn = mock(() => t3)
+        const mapper = mock(() => t4)
+        const mapped = result.mapOrElse(defaultFn, mapper)
+        expect(mapped).toEqual(t3)
+        expect(defaultFn).toHaveBeenCalledTimes(1)
+        expect(defaultFn).toHaveBeenCalledWith(t2)
+        expect(mapper).toHaveBeenCalledTimes(0)
+        expectTypeOf(mapped).toEqualTypeOf<T3 | T4>()
+      }
     })
   })
 
   describe('and', () => {
     it('should work with Ok', () => {
-      const okResult = ok(5)
-      const otherOk = ok(10)
-      const errResult = err('error')
-      const andOk = okResult.and(otherOk)
-      expect(andOk.isOk()).toBe(true)
-      expect(andOk.unwrap()).toBe(10)
-      const andErr = okResult.and(errResult)
-      expect(andErr.isErr()).toBe(true)
-      expect(andErr.unwrapErr()).toBe('error')
+      {
+        const result = new Ok(t1)
+        const other = new Ok(t3)
+        const chained = result.and(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t3)
+        expect(chained).toBe(other)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T3>>()
+      }
+      {
+        const result = new Ok(t1)
+        const other = new Ok(t4)
+        const chained = result.and(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t4)
+        expect(chained).toBe(other)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T4>>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      const otherOk = ok(10)
-      const andResult = errResult.and(otherOk)
-      expect(andResult.isErr()).toBe(true)
-      expect(andResult.unwrapErr()).toBe('boom')
+      {
+        const result = new Err(t2)
+        const other = new Ok(t3)
+        const chained = result.and(other)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t2)
+        expect(chained).toBe(result)
+        expectTypeOf(chained).toEqualTypeOf<Err<T2>>()
+      }
+      {
+        const result = new Err(t2)
+        const other = new Ok(t4)
+        const chained = result.and(other)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t2)
+        expect(chained).toBe(result)
+        expectTypeOf(chained).toEqualTypeOf<Err<T2>>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(5)
-      const andOk = result.and(ok(10))
-      expect(andOk.isOk() && andOk.unwrap()).toBe(10)
-      const andErr = result.and(err('error'))
-      expect(andErr.isErr()).toBe(true)
-      expect(andErr.unwrapErr()).toBe('error')
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const other: Result<T3, T4> = ok(t3)
+        const chained = result.and(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t3)
+        expect(chained).toBe(other)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2 | T4>>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const other: Result<T3, T4> = err(t4)
+        const chained = result.and(other)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t4)
+        expect(chained).toBe(other)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2 | T4>>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const andOk = result.and(ok(10))
-      expect(andOk.isErr()).toBe(true)
-      expect(andOk.unwrapErr()).toBe('error')
-      const andErr = result.and(err('new error'))
-      expect(andErr.isErr()).toBe(true)
-      expect(andErr.unwrapErr()).toBe('error')
+      {
+        const result: Result<T1, T2> = err(t2)
+        const other: Result<T3, T4> = ok(t3)
+        const chained = result.and(other)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toBe(t2)
+        expect(chained).toBe(result)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2 | T4>>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const other: Result<T3, T4> = err(t4)
+        const chained = result.and(other)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toBe(t2)
+        expect(chained).toBe(result)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2 | T4>>()
+      }
     })
   })
 
   describe('andThen', () => {
     it('should work with Ok', () => {
-      const okResult = ok(42)
-        .andThen((x) => ok(x * 2))
-        .andThen((x) => ok(x + 1))
-      expect(okResult.unwrap()).toBe(85)
+      {
+        const result = new Ok(t1)
+        const fn = mock(() => new Ok(t3))
+        const chained = result.andThen(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t3)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith(t1)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T3>>()
+      }
+      {
+        const result = new Ok(t1)
+        const fn = mock(() => new Ok(t4))
+        const chained = result.andThen(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t4)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith(t1)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T4>>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('error message').andThen((x) => ok(x * 2))
-      expect(errResult.isErr()).toBe(true)
-      expect(errResult.unwrapErr()).toBe('error message')
+      {
+        const result = new Err(t2)
+        const fn = mock(() => new Ok(t3))
+        const chained = result.andThen(fn)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t2)
+        expect(chained).toBe(result)
+        expect(fn).toHaveBeenCalledTimes(0)
+        expectTypeOf(chained).toEqualTypeOf<Err<T2>>()
+      }
+      {
+        const result = new Err(t2)
+        const fn = mock(() => new Ok(t4))
+        const chained = result.andThen(fn)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t2)
+        expect(chained).toBe(result)
+        expect(fn).toHaveBeenCalledTimes(0)
+        expectTypeOf(chained).toEqualTypeOf<Err<T2>>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(5)
-      const chained = result.andThen((x) => ok(x * 2))
-      expect(chained.isOk() && chained.unwrap()).toBe(10)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const fn = mock(() => ok(t3))
+        const chained = result.andThen(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t3)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith(t1)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2>>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const fn = mock(() => err(t4))
+        const chained = result.andThen(fn)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t4)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith(t1)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<never, T2 | T4>>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const chained = result.andThen((x) => ok(x * 2))
-      expect(chained.isErr()).toBe(true)
+      {
+        const result: Result<T1, T2> = err(t2)
+        const fn = mock(() => ok(t3))
+        const chained = result.andThen(fn)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t2)
+        expect(chained).toBe(result)
+        expect(fn).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2>>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const fn = mock(() => err(t4))
+        const chained = result.andThen(fn)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t2)
+        expect(chained).toBe(result)
+        expect(fn).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<never, T2 | T4>>()
+      }
     })
   })
 
   describe('or', () => {
     it('should work with Ok', () => {
-      const okResult = ok(5)
-      const orResult = okResult.or(err('other'))
-      expect(orResult.isOk()).toBe(true)
-      expect(orResult.unwrap()).toBe(5)
+      {
+        const result = new Ok(t1)
+        const other = new Ok(t3)
+        const chained = result.or(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t1)
+        expect(chained).toBe(result)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T1>>()
+      }
+      {
+        const result = new Ok(t1)
+        const other = new Ok(t4)
+        const chained = result.or(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t1)
+        expect(chained).toBe(result)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T1>>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      const otherOk = ok(10)
-      const otherErr = err('other error')
-      const orOk = errResult.or(otherOk)
-      expect(orOk.isOk()).toBe(true)
-      expect(orOk.unwrap()).toBe(10)
-      const orErr = errResult.or(otherErr)
-      expect(orErr.isErr()).toBe(true)
-      expect(orErr.unwrapErr()).toBe('other error')
+      {
+        const result = new Err(t2)
+        const other = new Ok(t3)
+        const chained = result.or(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t3)
+        expect(chained).toBe(other)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T3>>()
+      }
+      {
+        const result = new Err(t2)
+        const other = new Ok(t4)
+        const chained = result.or(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t4)
+        expect(chained).toBe(other)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T4>>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(5)
-      const orOk = result.or(ok(10))
-      expect(orOk.isOk()).toBe(true)
-      expect(orOk.unwrap()).toBe(5)
-      const orErr = result.or(err('error'))
-      expect(orErr.isOk()).toBe(true)
-      expect(orErr.unwrap()).toBe(5)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const other: Result<T3, T4> = ok(t3)
+        const chained = result.or(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t1)
+        expect(chained).toBe(result)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, T4>>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const other: Result<T3, T4> = err(t4)
+        const chained = result.or(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t1)
+        expect(chained).toBe(result)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, T4>>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const orOk = result.or(ok(10))
-      expect(orOk.isOk()).toBe(true)
-      expect(orOk.unwrap()).toBe(10)
-      const orErr = result.or(err('new error'))
-      expect(orErr.isErr()).toBe(true)
-      expect(orErr.unwrapErr()).toBe('new error')
+      {
+        const result: Result<T1, T2> = err(t2)
+        const other: Result<T3, T4> = ok(t3)
+        const chained = result.or(other)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t3)
+        expect(chained).toBe(other)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, T4>>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const other: Result<T3, T4> = err(t4)
+        const chained = result.or(other)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t4)
+        expect(chained).toBe(other)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, T4>>()
+      }
     })
   })
 
   describe('orElse', () => {
     it('should work with Ok', () => {
-      const okResult = ok(5)
-      const orElseOk = okResult.orElse(() => err('other'))
-      expect(orElseOk.isOk()).toBe(true)
-      expect(orElseOk.unwrap()).toBe(5)
+      {
+        const result = new Ok(t1)
+        const fn = mock(() => new Ok(t3))
+        const chained = result.orElse(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t1)
+        expect(chained).toBe(result)
+        expect(fn).toHaveBeenCalledTimes(0)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T1>>()
+      }
+      {
+        const result = new Ok(t1)
+        const fn = mock(() => new Ok(t4))
+        const chained = result.orElse(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t1)
+        expect(chained).toBe(result)
+        expect(fn).toHaveBeenCalledTimes(0)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T1>>()
+      }
     })
 
     it('should work with Err', () => {
-      const errResult = err('boom')
-      const orElseErr = errResult.orElse((e) => ok(`fixed ${e}`))
-      expect(orElseErr.isOk()).toBe(true)
-      expect(orElseErr.unwrap()).toBe('fixed boom')
+      {
+        const result = new Err(t2)
+        const fn = mock(() => new Ok(t3))
+        const chained = result.orElse(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t3)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith(t2)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T3>>()
+      }
+      {
+        const result = new Err(t2)
+        const fn = mock(() => new Ok(t4))
+        const chained = result.orElse(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t4)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith(t2)
+        expectTypeOf(chained).toEqualTypeOf<Ok<T4>>()
+      }
     })
 
     it('should work with Result containing Ok', () => {
-      const result: Result<number, string> = ok(5)
-      const orElseOk = result.orElse((e) => ok(`fixed ${e}`))
-      expect(orElseOk.isOk()).toBe(true)
-      expect(orElseOk.unwrap()).toBe(5)
-      const orElseErr = result.orElse((e) => err(`fixed ${e}`))
-      expect(orElseErr.isOk()).toBe(true)
-      expect(orElseErr.unwrap()).toBe(5)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const fn = mock(() => ok(t3))
+        const chained = result.orElse(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t1)
+        expect(chained).toBe(result)
+        expect(fn).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, never>>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const fn = mock(() => err(t4))
+        const chained = result.orElse(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t1)
+        expect(chained).toBe(result)
+        expect(fn).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1, T4>>()
+      }
     })
 
     it('should work with Result containing Err', () => {
-      const result: Result<number, string> = err('error')
-      const orElseOk = result.orElse((e) => ok(`fixed ${e}`))
-      expect(orElseOk.isOk()).toBe(true)
-      expect(orElseOk.unwrap()).toBe('fixed error')
-      const orElseErr = result.orElse((e) => err(`fixed ${e}`))
-      expect(orElseErr.isErr()).toBe(true)
-      expect(orElseErr.unwrapErr()).toBe('fixed error')
+      {
+        const result: Result<T1, T2> = err(t2)
+        const fn = mock(() => ok(t3))
+        const chained = result.orElse(fn)
+        expect(chained.isOk()).toBe(true)
+        expect(chained.unwrap()).toEqual(t3)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith(t2)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, never>>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const fn = mock(() => err(t4))
+        const chained = result.orElse(fn)
+        expect(chained.isErr()).toBe(true)
+        expect(chained.unwrapErr()).toEqual(t4)
+        expect(fn).toHaveBeenCalledTimes(1)
+        expect(fn).toHaveBeenCalledWith(t2)
+        expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1, T4>>()
+      }
     })
   })
 
   describe('inspect', () => {
     it('should work with Ok', () => {
-      let num = 0
-      const okResult = ok(42)
-      const inspected = okResult.inspect((x) => {
-        num -= x
-      })
-      expect(inspected.unwrap()).toBe(42)
-      expect(num).toBe(-42)
+      {
+        const result = new Ok(t1)
+        const callback = mock(() => {})
+        const inspected = result.inspect(callback)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(callback).toHaveBeenCalledWith(t1)
+        expectTypeOf(inspected).toEqualTypeOf<Ok<T1>>()
+      }
+      {
+        const result = new Ok(t1)
+        const callback = mock(() => {})
+        const inspected = result.inspect(callback)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(callback).toHaveBeenCalledWith(t1)
+        expectTypeOf(inspected).toEqualTypeOf<Ok<T1>>()
+      }
     })
+
     it('should work with Err', () => {
-      const errResult = err('boom')
-      let num = 0
-      const inspected = errResult.inspect((_x) => {
-        num += 1
-      })
-      expect(inspected.unwrapErr()).toBe('boom')
-      expect(num).toBe(0)
+      {
+        const result = new Err(t2)
+        const callback = mock(() => {})
+        const inspected = result.inspect(callback)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(0)
+        expectTypeOf(inspected).toEqualTypeOf<Err<T2>>()
+      }
+      {
+        const result = new Err(t2)
+        const callback = mock(() => {})
+        const inspected = result.inspect(callback)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(0)
+        expectTypeOf(inspected).toEqualTypeOf<Err<T2>>()
+      }
     })
+
     it('should work with Result containing Ok', () => {
-      let num = 0
-      const result: Result<number, string> = ok(5)
-      const inspected = result.inspect((x) => {
-        num -= x
-      })
-      expect(inspected.unwrap()).toBe(5)
-      expect(num).toBe(-5)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const callback = mock(() => {})
+        const inspected = result.inspect(callback)
+        expect(inspected.isOk()).toBe(true)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(callback).toHaveBeenCalledWith(t1)
+        expectTypeOf(util.asIs(inspected)).toEqualTypeOf<Result<T1, T2>>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const callback = mock(() => {})
+        const inspected = result.inspect(callback)
+        expect(inspected.isOk()).toBe(true)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(callback).toHaveBeenCalledWith(t1)
+        expectTypeOf(util.asIs(inspected)).toEqualTypeOf<Result<T1, T2>>()
+      }
     })
+
     it('should work with Result containing Err', () => {
-      let num = 0
-      const result: Result<number, string> = err('error')
-      const inspected = result.inspect((x) => {
-        num -= x
-      })
-      expect(inspected.unwrapErr()).toBe('error')
-      expect(num).toBe(0)
+      {
+        const result: Result<T1, T2> = err(t2)
+        const callback = mock(() => {})
+        const inspected = result.inspect(callback)
+        expect(inspected.isErr()).toBe(true)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(inspected)).toEqualTypeOf<Result<T1, T2>>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const callback = mock(() => {})
+        const inspected = result.inspect(callback)
+        expect(inspected.isErr()).toBe(true)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(inspected)).toEqualTypeOf<Result<T1, T2>>()
+      }
     })
   })
 
   describe('inspectErr', () => {
     it('should work with Ok', () => {
-      let num = 0
-      const okResult = ok(42)
-      const inspected = okResult.inspectErr((_x) => {
-        num += 1
-      })
-      expect(inspected.unwrap()).toBe(42)
-      expect(num).toBe(0)
+      {
+        const result = new Ok(t1)
+        const callback = mock(() => {})
+        const inspected = result.inspectErr(callback)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(0)
+        expectTypeOf(inspected).toEqualTypeOf<Ok<T1>>()
+      }
+      {
+        const result = new Ok(t1)
+        const callback = mock(() => {})
+        const inspected = result.inspectErr(callback)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(0)
+        expectTypeOf(inspected).toEqualTypeOf<Ok<T1>>()
+      }
     })
+
     it('should work with Err', () => {
-      let str = '!'
-      const errResult = err('boom')
-      const inspected = errResult.inspectErr((x) => {
-        str += x
-      })
-      expect(inspected.unwrapErr()).toBe('boom')
-      expect(str).toBe('!boom')
+      {
+        const result = new Err(t2)
+        const callback = mock(() => {})
+        const inspected = result.inspectErr(callback)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(callback).toHaveBeenCalledWith(t2)
+        expectTypeOf(inspected).toEqualTypeOf<Err<T2>>()
+      }
+      {
+        const result = new Err(t2)
+        const callback = mock(() => {})
+        const inspected = result.inspectErr(callback)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(callback).toHaveBeenCalledWith(t2)
+        expectTypeOf(inspected).toEqualTypeOf<Err<T2>>()
+      }
     })
+
     it('should work with Result containing Ok', () => {
-      let num = 0
-      const result: Result<number, number> = ok(5)
-      const inspected = result.inspectErr((x) => {
-        num += x
-      })
-      expect(inspected.unwrap()).toBe(5)
-      expect(num).toBe(0)
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const callback = mock(() => {})
+        const inspected = result.inspectErr(callback)
+        expect(inspected.isOk()).toBe(true)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(inspected)).toEqualTypeOf<Result<T1, T2>>()
+      }
+      {
+        const result: Result<T1, T2> = ok(t1)
+        const callback = mock(() => {})
+        const inspected = result.inspectErr(callback)
+        expect(inspected.isOk()).toBe(true)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(0)
+        expectTypeOf(util.asIs(inspected)).toEqualTypeOf<Result<T1, T2>>()
+      }
     })
+
     it('should work with Result containing Err', () => {
-      let str = '!'
-      const result: Result<number, string> = err('error')
-      const inspected = result.inspectErr((x) => {
-        str += x
-      })
-      expect(inspected.unwrapErr()).toBe('error')
-      expect(str).toBe('!error')
+      {
+        const result: Result<T1, T2> = err(t2)
+        const callback = mock(() => {})
+        const inspected = result.inspectErr(callback)
+        expect(inspected.isErr()).toBe(true)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(callback).toHaveBeenCalledWith(t2)
+        expectTypeOf(util.asIs(inspected)).toEqualTypeOf<Result<T1, T2>>()
+      }
+      {
+        const result: Result<T1, T2> = err(t2)
+        const callback = mock(() => {})
+        const inspected = result.inspectErr(callback)
+        expect(inspected.isErr()).toBe(true)
+        expect(inspected).toBe(result)
+        expect(callback).toHaveBeenCalledTimes(1)
+        expect(callback).toHaveBeenCalledWith(t2)
+        expectTypeOf(util.asIs(inspected)).toEqualTypeOf<Result<T1, T2>>()
+      }
+    })
+  })
+})
+
+describe('utils', () => {
+  describe('asIs', () => {
+    it('should merge `Result<T1, T2> | Err<T3>` to `Result<T1, T2 | T3>`', () => {
+      const result = null as unknown as Result<T1, T2> | Err<T3>
+      expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T1, T2 | T3>>()
+    })
+    it('should merge `Result<T1, T2> | Ok<T3>` to `Result<T1 | T3, T2>`', () => {
+      const result = null as unknown as Result<T1, T2> | Ok<T3>
+      expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T1 | T3, T2>>()
+    })
+    it('should merge `Result<T1, T2> | Result<T3, T4>` to `Result<T1 | T3, T2 | T4>`', () => {
+      const result = null as unknown as Result<T1, T2> | Result<T3, T4>
+      expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T1 | T3, T2 | T4>>()
+    })
+    it('should merge `Ok<T1> | Ok<T2>` to `Result<T1 | T2, never>`', () => {
+      const result = null as unknown as Ok<T1> | Ok<T2>
+      expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T1 | T2, never>>()
+    })
+    it('should merge `Err<T1> | Err<T2>` to `Result<never, T1 | T2>`', () => {
+      const result = null as unknown as Err<T1> | Err<T2>
+      expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<never, T1 | T2>>()
+    })
+    it('should merge `Ok<T1> | Err<T2> | Err<T3>` to `Result<T1, T2 | T3>`', () => {
+      const result = null as unknown as Ok<T1> | Err<T2> | Err<T3>
+      expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T1, T2 | T3>>()
+    })
+    it('should merge `Ok<T1> | Ok<T2> | Err<T3>` to `Result<T1 | T2, T3>`', () => {
+      const result = null as unknown as Ok<T1> | Ok<T2> | Err<T3>
+      expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T1 | T2, T3>>()
     })
   })
 
-  describe('Type narrowing', () => {
-    it('should narrow types correctly with isOk', () => {
-      const result: Result<number, string> = ok(42)
-
-      if (result.isOk()) {
-        // TypeScript should know this is Ok<number>
-        expect(result.value).toBe(42)
-      }
+  describe('ok', () => {
+    it('should create an Ok value with type Result<T, never>', () => {
+      const result = ok(t1)
+      expect(result.isOk()).toBe(true)
+      expect(result.isErr()).toBe(false)
+      expect(result.unwrap()).toBe(t1)
+      expectTypeOf(result).toEqualTypeOf<Result<T1, never>>()
     })
+  })
 
-    it('should narrow types correctly with isErr', () => {
-      const result: Result<number, string> = err('error')
-
-      if (result.isErr()) {
-        // TypeScript should know this is Err<string>
-        expect(result.error).toBe('error')
-      }
+  describe('err', () => {
+    it('should create an Err value with type Result<never, T>', () => {
+      const result = err(t1)
+      expect(result.isOk()).toBe(false)
+      expect(result.isErr()).toBe(true)
+      expect(result.unwrapErr()).toBe(t1)
+      expectTypeOf(result).toEqualTypeOf<Result<never, T1>>()
     })
   })
 })
