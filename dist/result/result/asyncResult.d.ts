@@ -42,7 +42,7 @@ declare class AsyncResult<T, E> {
      * const merged = await AsyncResult.merge([asyncResult1, asyncResult2, asyncResult3])
      * expect(merged.unwrapErr()).toBe("2")
      */
-    static merge<const T extends PromiseLike<Result<unknown, unknown>>[]>(results: T): AsyncResult<AsyncResultOkTypes<T>, AsyncResultErrTypes<T>[number]>;
+    static merge<const T extends ReadonlyArray<PromiseLike<Result<unknown, unknown>>>>(results: T): AsyncResult<import("./type.js").ResultOkTypes<{ -readonly [P in keyof T]: Awaited<T[P]>; }>, import("./type.js").ResultErrTypes<{ -readonly [P in keyof T]: Awaited<T[P]>; }>[number]>;
     /**
      * AsyncResult version of `Promise.all` with **fail-fast** semantics.
      *
@@ -63,7 +63,7 @@ declare class AsyncResult<T, E> {
      * const result = await AsyncResult.all([slow, fast])
      * expect(result.unwrapErr()).toBe('boom') // resolves ~immediately
      */
-    static all<const T extends PromiseLike<Result<unknown, unknown>>[]>(results: T): AsyncResult<AsyncResultOkTypes<T>, AsyncResultErrTypes<T>[number]>;
+    static all<const T extends ReadonlyArray<PromiseLike<Result<unknown, unknown>>>>(results: T): AsyncResult<AsyncResultOkTypes<T>, AsyncResultErrTypes<T>[number]>;
 }
 export default AsyncResult;
 //# sourceMappingURL=asyncResult.d.ts.map
