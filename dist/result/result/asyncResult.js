@@ -79,7 +79,6 @@ class AsyncResult {
      * expect(merged.unwrapErr()).toBe("2")
      */
     static merge(results) {
-        // @ts-expect-error this should be correct, verified in unit tests
         return new AsyncResult(Promise.all(results).then(util.all));
     }
     /**

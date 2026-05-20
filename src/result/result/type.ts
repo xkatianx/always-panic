@@ -21,16 +21,20 @@ export type ResultErrTypes<T extends Result<unknown, unknown>[]> = {
 }
 
 export type AsyncResultOkTypes<
-  T extends PromiseLike<Result<unknown, unknown>>[],
+  T extends ReadonlyArray<PromiseLike<Result<unknown, unknown>>>,
 > = {
-  [key in keyof T]: T[key] extends PromiseLike<Result<unknown, unknown>>
+  -readonly [key in keyof T]: T[key] extends PromiseLike<
+    Result<unknown, unknown>
+  >
     ? OkContent<Awaited<T[key]>>
     : never
 }
 export type AsyncResultErrTypes<
-  T extends PromiseLike<Result<unknown, unknown>>[],
+  T extends ReadonlyArray<PromiseLike<Result<unknown, unknown>>>,
 > = {
-  [key in keyof T]: T[key] extends PromiseLike<Result<unknown, unknown>>
+  -readonly [key in keyof T]: T[key] extends PromiseLike<
+    Result<unknown, unknown>
+  >
     ? ErrContent<Awaited<T[key]>>
     : never
 }

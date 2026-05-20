@@ -1,867 +1,597 @@
 /** biome-ignore-all lint/suspicious/noThenProperty: feature */
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, expectTypeOf, it, mock } from 'bun:test'
 import { err, ok } from '../index.js'
 import AsyncResult from './asyncResult'
+import Err from './err.js'
+import Ok from './ok.js'
 import type { Result } from './type.js'
 
-describe('AsyncResult basics', () => {
-  describe('from (sync)', () => {
-    it('should create AsyncResult from Ok result', async () => {
-      const result = ok(42)
-      const asyncResult = AsyncResult.from(result)
-      const resolved = await asyncResult
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(42)
+type T1 = { T1: number }
+type T2 = { T2: number }
+type T3 = { T3: number }
+type T4 = { T4: number }
+
+const t1: T1 = { T1: 1 }
+const t2: T2 = { T2: 2 }
+const t3: T3 = { T3: 3 }
+const t4: T4 = { T4: 4 }
+
+describe('AsyncResult', () => {
+  const okT3s = [
+    ok(t3),
+    Promise.resolve(ok(t3)),
+    new Ok(t3),
+    Promise.resolve(new Ok(t3)),
+    AsyncResult.from(ok(t3)),
+    Promise.resolve(AsyncResult.from(ok(t3))),
+  ] as const
+
+  const okT3Fns = [
+    () => ok(t3),
+    async () => ok(t3),
+    () => new Ok(t3),
+    async () => new Ok(t3),
+    () => AsyncResult.from(ok(t3)),
+    async () => AsyncResult.from(ok(t3)),
+  ] as const
+
+  const errT4s = [
+    err(t4),
+    Promise.resolve(err(t4)),
+    new Err(t4),
+    Promise.resolve(new Err(t4)),
+    AsyncResult.from(err(t4)),
+    Promise.resolve(AsyncResult.from(err(t4))),
+  ] as const
+
+  const errT4Fns = [
+    () => err(t4),
+    async () => err(t4),
+    () => new Err(t4),
+    async () => new Err(t4),
+    () => AsyncResult.from(err(t4)),
+    async () => AsyncResult.from(err(t4)),
+  ] as const
+
+  const resOkT3T4s = [
+    ok(t3) as Result<T3, T4>,
+    Promise.resolve(ok(t3) as Result<T3, T4>),
+    new Ok(t3) as Result<T3, T4>,
+    Promise.resolve(new Ok(t3) as Result<T3, T4>),
+    AsyncResult.from(ok(t3) as Result<T3, T4>),
+    Promise.resolve(AsyncResult.from(ok(t3) as Result<T3, T4>)),
+  ] as const
+
+  const resOkT3T4Fns = [
+    () => ok(t3) as Result<T3, T4>,
+    async () => ok(t3) as Result<T3, T4>,
+    () => new Ok(t3) as Result<T3, T4>,
+    async () => new Ok(t3) as Result<T3, T4>,
+    () => AsyncResult.from(ok(t3) as Result<T3, T4>),
+    async () => AsyncResult.from(ok(t3) as Result<T3, T4>),
+  ] as const
+
+  const resErrT3T4s = [
+    err(t4) as Result<T3, T4>,
+    Promise.resolve(err(t4) as Result<T3, T4>),
+    new Err(t4) as Result<T3, T4>,
+    Promise.resolve(new Err(t4) as Result<T3, T4>),
+    AsyncResult.from(err(t4) as Result<T3, T4>),
+    Promise.resolve(AsyncResult.from(err(t4) as Result<T3, T4>)),
+  ] as const
+
+  const resErrT3T4Fns = [
+    () => err(t4) as Result<T3, T4>,
+    async () => err(t4) as Result<T3, T4>,
+    () => new Err(t4) as Result<T3, T4>,
+    async () => new Err(t4) as Result<T3, T4>,
+    () => AsyncResult.from(err(t4) as Result<T3, T4>),
+    async () => AsyncResult.from(err(t4) as Result<T3, T4>),
+  ] as const
+
+  describe('from', () => {
+    it('should create AsyncResult from Ok', async () => {
+      for (const res of okT3s) {
+        const asyncResult = AsyncResult.from(res)
+        expectTypeOf(asyncResult).toEqualTypeOf<AsyncResult<T3, never>>()
+        const resolved = await asyncResult
+        expect(resolved.unwrap()).toBe(t3)
       }
-    })
-
-    it('should create AsyncResult from Err result', async () => {
-      const result = err('error message')
-      const asyncResult = AsyncResult.from(result)
-      const resolved = await asyncResult
-      expect(resolved.isErr()).toBe(true)
-      if (resolved.isErr()) {
-        expect(resolved.error).toBe('error message')
-      }
-    })
-
-    it('should create AsyncResult from function returning Ok Result', async () => {
-      let called = false
-      const fn = () => {
-        called = true
-        return ok(123)
-      }
-      const asyncResult = AsyncResult.from(fn)
-      expect(called).toBe(true)
-      const resolved = await asyncResult
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(123)
-      }
-    })
-
-    it('should create AsyncResult from function returning Err Result', async () => {
-      let called = false
-      const fn = () => {
-        called = true
-        return err('sync error')
-      }
-      const asyncResult = AsyncResult.from(fn)
-      expect(called).toBe(true)
-      const resolved = await asyncResult
-      expect(resolved.isErr()).toBe(true)
-      if (resolved.isErr()) {
-        expect(resolved.error).toBe('sync error')
-      }
-    })
-  })
-
-  describe('from (async)', () => {
-    describe('with PromiseLike that resolves to Ok', () => {
-      it('should create AsyncResult from Promise resolving to Ok', async () => {
-        const promise = Promise.resolve(ok(42))
-        const asyncResult = AsyncResult.from(promise)
-        const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe(42)
-        }
-      })
-
-      it('should work with already resolved Promise', async () => {
-        const promise = Promise.resolve(ok('test'))
-        const asyncResult = AsyncResult.from(promise)
-        const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe('test')
-        }
-      })
-
-      it('should work with pending Promise', async () => {
-        const promise = new Promise<Result<number, never>>((resolve) => {
-          setTimeout(() => {
-            resolve(ok(100))
-          }, 10)
-        })
-        const asyncResult = AsyncResult.from(promise)
-        const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe(100)
-        }
-      })
-
-      it('should work with PromiseLike object', async () => {
-        const promiseLike: PromiseLike<Result<number, never>> = {
-          then: <TResult1 = Result<number, never>, TResult2 = never>(
-            onfulfilled?:
-              | ((
-                  value: Result<number, never>,
-                ) => TResult1 | PromiseLike<TResult1>)
-              | null,
-            onrejected?:
-              | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
-              | null,
-          ): PromiseLike<TResult1 | TResult2> => {
-            return Promise.resolve(ok(99)).then(onfulfilled, onrejected)
-          },
-        }
-        const asyncResult = AsyncResult.from(promiseLike)
-        const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe(99)
-        }
-      })
-    })
-
-    describe('with PromiseLike that resolves to Err', () => {
-      it('should create AsyncResult from Promise resolving to Err', async () => {
-        const promise = Promise.resolve(err('error message'))
-        const asyncResult = AsyncResult.from(promise)
-        const resolved = await asyncResult
-        expect(resolved.isErr()).toBe(true)
-        if (resolved.isErr()) {
-          expect(resolved.error).toBe('error message')
-        }
-      })
-
-      it('should work with already resolved Promise', async () => {
-        const promise = Promise.resolve(err(404))
-        const asyncResult = AsyncResult.from(promise)
-        const resolved = await asyncResult
-        expect(resolved.isErr()).toBe(true)
-        if (resolved.isErr()) {
-          expect(resolved.error).toBe(404)
-        }
-      })
-
-      it('should work with pending Promise', async () => {
-        const promise = new Promise<Result<never, string>>((resolve) => {
-          setTimeout(() => {
-            resolve(err('pending'))
-          }, 10)
-        })
-        const asyncResult = AsyncResult.from(promise)
-        const resolved = await asyncResult
-        expect(resolved.isErr()).toBe(true)
-        if (resolved.isErr()) {
-          expect(resolved.error).toBe('pending')
-        }
-      })
-    })
-
-    describe('with function returning PromiseLike that resolves to Ok', () => {
-      it('should create AsyncResult from function returning Promise', async () => {
-        const fn = () => Promise.resolve(ok(42))
+      for (const fn of resOkT3T4s) {
         const asyncResult = AsyncResult.from(fn)
+        expectTypeOf(asyncResult).toEqualTypeOf<AsyncResult<T3, T4>>()
         const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe(42)
-        }
-      })
+        expect(resolved.unwrap()).toBe(t3)
+      }
+    })
 
-      it('should call the function immediately when fromAsync is called', async () => {
-        let called = false
-        const fn = () => {
-          called = true
-          return Promise.resolve(ok(42))
-        }
-        const asyncResult = AsyncResult.from(fn)
-        expect(called).toBe(true)
+    it('should create AsyncResult from Err', async () => {
+      for (const res of errT4s) {
+        const asyncResult = AsyncResult.from(res)
+        expectTypeOf(asyncResult).toEqualTypeOf<AsyncResult<never, T4>>()
         const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe(42)
-        }
-      })
-
-      it('should work with function returning already resolved Promise', async () => {
-        const fn = () => Promise.resolve(ok('lazy'))
+        expect(resolved.unwrapErr()).toBe(t4)
+      }
+      for (const fn of resErrT3T4s) {
         const asyncResult = AsyncResult.from(fn)
+        expectTypeOf(asyncResult).toEqualTypeOf<AsyncResult<T3, T4>>()
         const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe('lazy')
-        }
-      })
+        expect(resolved.unwrapErr()).toBe(t4)
+      }
+    })
 
-      it('should work with function returning pending Promise', async () => {
-        const fn = () =>
-          new Promise<Result<number, never>>((resolve) => {
-            setTimeout(() => {
-              resolve(ok(200))
-            }, 10)
-          })
+    it('should create AsyncResult from function returning Ok', async () => {
+      for (const fn2 of okT3Fns) {
+        const fn = mock(fn2)
         const asyncResult = AsyncResult.from(fn)
+        expectTypeOf(asyncResult).toEqualTypeOf<AsyncResult<T3, never>>()
         const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe(200)
-        }
-      })
-
-      it('should work with function returning PromiseLike object', async () => {
-        const fn = (): PromiseLike<Result<number, never>> => ({
-          then: <TResult1 = Result<number, never>, TResult2 = never>(
-            onfulfilled?:
-              | ((
-                  value: Result<number, never>,
-                ) => TResult1 | PromiseLike<TResult1>)
-              | null,
-            onrejected?:
-              | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
-              | null,
-          ): PromiseLike<TResult1 | TResult2> => {
-            return Promise.resolve(ok(88)).then(onfulfilled, onrejected)
-          },
-        })
+        expect(resolved.unwrap()).toBe(t3)
+        expect(fn).toHaveBeenCalledTimes(1)
+      }
+      for (const fn2 of resOkT3T4Fns) {
+        const fn = mock(fn2)
         const asyncResult = AsyncResult.from(fn)
+        expectTypeOf(asyncResult).toEqualTypeOf<AsyncResult<T3, T4>>()
         const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe(88)
-        }
-      })
+        expect(resolved.unwrap()).toBe(t3)
+        expect(fn).toHaveBeenCalledTimes(1)
+      }
     })
 
-    describe('with function returning PromiseLike that resolves to Err', () => {
-      it('should create AsyncResult from function returning Promise', async () => {
-        const fn = () => Promise.resolve(err('function error'))
+    it('should create AsyncResult from function returning Err', async () => {
+      for (const fn2 of errT4Fns) {
+        const fn = mock(fn2)
         const asyncResult = AsyncResult.from(fn)
+        expectTypeOf(asyncResult).toEqualTypeOf<AsyncResult<never, T4>>()
         const resolved = await asyncResult
-        expect(resolved.isErr()).toBe(true)
-        if (resolved.isErr()) {
-          expect(resolved.error).toBe('function error')
-        }
-      })
-
-      it('should call the function immediately when fromAsync is called', async () => {
-        let called = false
-        const fn = () => {
-          called = true
-          return Promise.resolve(err('lazy error'))
-        }
+        expect(resolved.unwrapErr()).toBe(t4)
+        expect(fn).toHaveBeenCalledTimes(1)
+      }
+      for (const fn2 of resErrT3T4Fns) {
+        const fn = mock(fn2)
         const asyncResult = AsyncResult.from(fn)
-        expect(called).toBe(true)
+        expectTypeOf(asyncResult).toEqualTypeOf<AsyncResult<T3, T4>>()
         const resolved = await asyncResult
-        expect(resolved.isErr()).toBe(true)
-        if (resolved.isErr()) {
-          expect(resolved.error).toBe('lazy error')
-        }
-      })
-
-      it('should work with function returning already resolved Promise', async () => {
-        const fn = () => Promise.resolve(err(500))
-        const asyncResult = AsyncResult.from(fn)
-        const resolved = await asyncResult
-        expect(resolved.isErr()).toBe(true)
-        if (resolved.isErr()) {
-          expect(resolved.error).toBe(500)
-        }
-      })
-
-      it('should work with function returning pending Promise', async () => {
-        const fn = () =>
-          new Promise<Result<never, string>>((resolve) => {
-            setTimeout(() => {
-              resolve(err('delayed'))
-            }, 10)
-          })
-        const asyncResult = AsyncResult.from(fn)
-        const resolved = await asyncResult
-        expect(resolved.isErr()).toBe(true)
-        if (resolved.isErr()) {
-          expect(resolved.error).toBe('delayed')
-        }
-      })
-    })
-
-    describe('with Promise that rejects', () => {
-      it('should propagate rejection from Promise', async () => {
-        const promise = Promise.reject(new Error('rejected'))
-        const asyncResult = AsyncResult.from(promise)
-        await expect(Promise.resolve(asyncResult)).rejects.toThrow('rejected')
-      })
-
-      it('should propagate rejection from pending Promise', async () => {
-        const promise = new Promise<Result<number, never>>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error('timeout'))
-          }, 10)
-        })
-        const asyncResult = AsyncResult.from(promise)
-        await expect(Promise.resolve(asyncResult)).rejects.toThrow('timeout')
-      })
-
-      it('should propagate rejection with non-Error value', async () => {
-        const promise = Promise.reject(new Error('string error'))
-        const asyncResult = AsyncResult.from(promise)
-        await expect(Promise.resolve(asyncResult)).rejects.toThrow(
-          'string error',
-        )
-      })
-    })
-
-    describe('with function that throws synchronously', () => {
-      it('should throw immediately when fromAsync is called', () => {
-        const fn = () => {
-          throw new Error('sync throw')
-        }
-        expect(() => AsyncResult.from(fn)).toThrow('sync throw')
-      })
-
-      it('should throw immediately with non-Error value', () => {
-        const fn = () => {
-          throw new Error('string throw')
-        }
-        expect(() => AsyncResult.from(fn)).toThrow('string throw')
-      })
-    })
-
-    describe('with function returning Promise that rejects', () => {
-      it('should propagate rejection from function-returned Promise', async () => {
-        const fn = () => Promise.reject(new Error('function rejection'))
-        const asyncResult = AsyncResult.from(fn)
-        await expect(Promise.resolve(asyncResult)).rejects.toThrow(
-          'function rejection',
-        )
-      })
-
-      it('should call function immediately when fromAsync is called', async () => {
-        let called = false
-        const fn = () => {
-          called = true
-          return Promise.reject(new Error('called and rejected'))
-        }
-        const asyncResult = AsyncResult.from(fn)
-        expect(called).toBe(true)
-        await expect(Promise.resolve(asyncResult)).rejects.toThrow(
-          'called and rejected',
-        )
-      })
-
-      it('should propagate rejection with non-Error value', async () => {
-        const fn = () => Promise.reject(new Error('123'))
-        const asyncResult = AsyncResult.from(fn)
-        await expect(Promise.resolve(asyncResult)).rejects.toThrow('123')
-      })
-    })
-
-    describe('edge cases', () => {
-      it('should handle multiple calls to fromAsync with same Promise', async () => {
-        const promise = Promise.resolve(ok(42))
-        const asyncResult1 = AsyncResult.from(promise)
-        const asyncResult2 = AsyncResult.from(promise)
-        const [resolved1, resolved2] = await Promise.all([
-          asyncResult1,
-          asyncResult2,
-        ])
-        expect(resolved1.isOk()).toBe(true)
-        expect(resolved2.isOk()).toBe(true)
-        if (resolved1.isOk() && resolved2.isOk()) {
-          expect(resolved1.value).toBe(42)
-          expect(resolved2.value).toBe(42)
-        }
-      })
-
-      it('should handle multiple calls to fromAsync with same function', async () => {
-        let callCount = 0
-        const fn = () => {
-          callCount++
-          return Promise.resolve(ok(callCount))
-        }
-        const asyncResult1 = AsyncResult.from(fn)
-        const asyncResult2 = AsyncResult.from(fn)
-        const [resolved1, resolved2] = await Promise.all([
-          asyncResult1,
-          asyncResult2,
-        ])
-        expect(callCount).toBe(2)
-        expect(resolved1.isOk()).toBe(true)
-        expect(resolved2.isOk()).toBe(true)
-        if (resolved1.isOk() && resolved2.isOk()) {
-          expect(resolved1.value).toBe(1)
-          expect(resolved2.value).toBe(2)
-        }
-      })
-
-      it('should handle function that returns different Results on each call', async () => {
-        let callCount = 0
-        const fn = () => {
-          callCount++
-          return Promise.resolve(
-            callCount % 2 === 0 ? ok(callCount) : err(callCount),
-          )
-        }
-        const asyncResult1 = AsyncResult.from(fn)
-        const asyncResult2 = AsyncResult.from(fn)
-        const [resolved1, resolved2] = await Promise.all([
-          asyncResult1,
-          asyncResult2,
-        ])
-        expect(resolved1.isErr()).toBe(true)
-        expect(resolved2.isOk()).toBe(true)
-        if (resolved1.isErr() && resolved2.isOk()) {
-          expect(resolved1.error).toBe(1)
-          expect(resolved2.value).toBe(2)
-        }
-      })
-
-      it('should work with complex Result types', async () => {
-        type ComplexResult = Result<{ id: number; name: string }, string>
-        const promise: Promise<ComplexResult> = Promise.resolve(
-          ok({ id: 1, name: 'test' }),
-        )
-        const asyncResult = AsyncResult.from(promise)
-        const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toEqual({ id: 1, name: 'test' })
-        }
-      })
-
-      it('should work with AsyncResult returned from function', async () => {
-        const fn = () => AsyncResult.from(ok(42))
-        const asyncResult = AsyncResult.from(fn)
-        const resolved = await asyncResult
-        expect(resolved.isOk()).toBe(true)
-        if (resolved.isOk()) {
-          expect(resolved.value).toBe(42)
-        }
-      })
-    })
-  })
-
-  describe('map', () => {
-    it('should map Ok value with sync function', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const mapped = asyncResult.map((x) => x * 2)
-      const resolved = await mapped
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(10)
+        expect(resolved.unwrapErr()).toBe(t4)
+        expect(fn).toHaveBeenCalledTimes(1)
       }
-    })
-
-    it('should map Ok value with async function', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const mapped = asyncResult.map((x) => Promise.resolve(x * 2))
-      const resolved = await mapped
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(10)
-      }
-    })
-
-    it('should not map Err value', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const mapped = asyncResult.map((x) => x * 2)
-      const resolved = await mapped
-      expect(resolved.isErr()).toBe(true)
-      if (resolved.isErr()) {
-        expect(resolved.error).toBe('error')
-      }
-    })
-  })
-
-  describe('mapErr', () => {
-    it('should map Err value with sync function', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const mapped = asyncResult.mapErr((e) => `mapped: ${e}`)
-      const resolved = await mapped
-      expect(resolved.isErr()).toBe(true)
-      if (resolved.isErr()) {
-        expect(resolved.error).toBe('mapped: error')
-      }
-    })
-
-    it('should map Err value with async function', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const mapped = asyncResult.mapErr((e) => Promise.resolve(`mapped: ${e}`))
-      const resolved = await mapped
-      expect(resolved.isErr()).toBe(true)
-      if (resolved.isErr()) {
-        expect(resolved.error).toBe('mapped: error')
-      }
-    })
-
-    it('should not map Ok value', async () => {
-      const asyncResult = AsyncResult.from(ok(42))
-      const mapped = asyncResult.mapErr(() => 'mapped')
-      const resolved = await mapped
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(42)
-      }
-    })
-  })
-
-  describe('andThen', () => {
-    it('should chain Ok to Ok with sync function', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const chained = asyncResult.andThen((x) => ok(x * 2))
-      const resolved = await chained
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(10)
-      }
-    })
-
-    it('should chain Ok to Ok with async function returning Result', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const chained = asyncResult.andThen((x) => Promise.resolve(ok(x * 2)))
-      const resolved = await chained
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(10)
-      }
-    })
-
-    it('should chain Ok to Ok with async function returning AsyncResult', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const chained = asyncResult.andThen(async (x) =>
-        AsyncResult.from(ok(x * 2)),
-      )
-      const resolved = await chained
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(10)
-      }
-    })
-
-    it('should chain Ok to Err', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const chained = asyncResult.andThen(() => err('chain error'))
-      const resolved = await chained
-      expect(resolved.isErr()).toBe(true)
-      if (resolved.isErr()) {
-        expect(resolved.error).toBe('chain error')
-      }
-    })
-
-    it('should not chain Err value', async () => {
-      const asyncResult = AsyncResult.from(err('original error'))
-      const chained = asyncResult.andThen((x) => ok(x * 2))
-      const resolved = await chained
-      expect(resolved.isErr()).toBe(true)
-      if (resolved.isErr()) {
-        expect(resolved.error).toBe('original error')
-      }
-    })
-  })
-
-  describe('and', () => {
-    it('should return second result if first is Ok', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const combined = asyncResult.and(ok(10))
-      const resolved = await combined
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(10)
-      }
-    })
-
-    it('should return first Err if first is Err', async () => {
-      const asyncResult = AsyncResult.from(err('first error'))
-      const combined = asyncResult.and(ok(10))
-      const resolved = await combined
-      expect(resolved.isErr()).toBe(true)
-      if (resolved.isErr()) {
-        expect(resolved.error).toBe('first error')
-      }
-    })
-
-    it('should work with AsyncResult', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const combined = asyncResult.and(AsyncResult.from(ok(10)))
-      const resolved = await combined
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(10)
-      }
-    })
-  })
-
-  describe('orElse', () => {
-    it('should handle Err with sync function', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const recovered = asyncResult.orElse(() => ok(42))
-      const resolved = await recovered
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(42)
-      }
-    })
-
-    it('should handle Err with async function returning Result', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const recovered = asyncResult.orElse(() => Promise.resolve(ok(42)))
-      const resolved = await recovered
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(42)
-      }
-    })
-
-    it('should handle Err with async function returning AsyncResult', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const recovered = asyncResult.orElse(async () => AsyncResult.from(ok(42)))
-      const resolved = await recovered
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(42)
-      }
-    })
-
-    it('should not handle Ok value', async () => {
-      const asyncResult = AsyncResult.from(ok(42))
-      const recovered = asyncResult.orElse(() => ok(100))
-      const resolved = await recovered
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(42)
-      }
-    })
-  })
-
-  describe('or', () => {
-    it('should return second result if first is Err', async () => {
-      const asyncResult = AsyncResult.from(err('first error'))
-      const combined = asyncResult.or(ok(42))
-      const resolved = await combined
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(42)
-      }
-    })
-
-    it('should return first Ok if first is Ok', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const combined = asyncResult.or(ok(42))
-      const resolved = await combined
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(5)
-      }
-    })
-
-    it('should work with AsyncResult', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const combined = asyncResult.or(AsyncResult.from(ok(42)))
-      const resolved = await combined
-      expect(resolved.isOk()).toBe(true)
-      if (resolved.isOk()) {
-        expect(resolved.value).toBe(42)
-      }
-    })
-  })
-
-  describe('inspect', () => {
-    it('should work with Ok', async () => {
-      let num = 100
-      const asyncResult = AsyncResult.from(ok(42)).inspect((x) => {
-        num += x
-      })
-      expect(num).toBe(100)
-      const inspected = await asyncResult
-      expect(num).toBe(142)
-      expect(inspected.isOk()).toBe(true)
-      expect(inspected.unwrap()).toBe(42)
-    })
-    it('should work with Err', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const inspected = await asyncResult.inspect((_x) => {
-        expect().fail('This line should not have been reached')
-      })
-      expect(inspected.isErr()).toBe(true)
-      expect(inspected.unwrapErr()).toBe('error')
-    })
-  })
-
-  describe('inspectErr', () => {
-    it('should work with Ok', async () => {
-      const asyncResult = AsyncResult.from(ok(42)).inspectErr((_x) => {
-        expect().fail('This line should not have been reached')
-      })
-      const inspected = await asyncResult
-      expect(inspected.isOk()).toBe(true)
-      expect(inspected.unwrap()).toBe(42)
-    })
-    it('should work with Err', async () => {
-      let str = '!'
-      const asyncResult = AsyncResult.from(err('error')).inspectErr((x) => {
-        str += x
-      })
-      expect(str).toBe('!')
-      const inspected = await asyncResult
-      expect(str).toBe('!error')
-      expect(inspected.isErr()).toBe(true)
-      expect(inspected.unwrapErr()).toBe('error')
     })
   })
 
   describe('then', () => {
     it('should work as Promise with onfulfilled', async () => {
-      const asyncResult = AsyncResult.from(ok(42))
-      const value = await asyncResult.then((result) => {
-        if (result.isOk()) {
-          return result.value
-        }
-        throw new Error('Unexpected error')
-      })
-      expect(value).toBe(42)
+      {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        const value = await asyncResult.then((result) => {
+          expectTypeOf(result).toEqualTypeOf<Result<T1, T2>>()
+          return result.unwrap()
+        })
+        expect(value).toBe(t1)
+      }
+      {
+        const asyncResult = AsyncResult.from(err(t2) as Result<T1, T2>)
+        const value = await asyncResult.then((result) => {
+          expectTypeOf(result).toEqualTypeOf<Result<T1, T2>>()
+          return result.unwrapErr()
+        })
+        expect(value).toBe(t2)
+      }
     })
 
     it('should work with Promise chain', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
+      const asyncResult = AsyncResult.from(ok(t1))
       const value = await asyncResult
-        .then((result) => (result.isOk() ? result.value : 0))
-        .then((x) => x * 2)
-      expect(value).toBe(10)
+        .then((result) => (result.isOk() ? result.value : t2))
+        .then((x) => {
+          expectTypeOf(x).toEqualTypeOf<T1 | T2>()
+          return x === t1 ? t3 : x
+        })
+      expect(value).toBe(t3)
     })
 
-    it('should handle errors in then chain', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const value = await asyncResult.then((result) => {
-        if (result.isOk()) {
-          return result.value
-        }
-        return -1
-      })
-      expect(value).toBe(-1)
+    it('should return a result after await', async () => {
+      const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+      const result = await asyncResult
+      expectTypeOf(result).toEqualTypeOf<Result<T1, T2>>()
+      expect(result.unwrap()).toBe(t1)
     })
   })
 
-  describe('complex chains', () => {
-    it('should chain multiple map operations', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const result = await asyncResult
-        .map((x) => x * 2)
-        .map((x) => x + 1)
-        .map((x) => Promise.resolve(x * 2))
+  describe('chains', () => {
+    describe('map', () => {
+      const mapToT3Fns = [() => t3, async () => t3] as const
 
-      expect(result.isOk()).toBe(true)
-      if (result.isOk()) {
-        expect(result.value).toBe(22) // (5 * 2 + 1) * 2
-      }
+      it('should have proper types', () => {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        mapToT3Fns.forEach((fn) => {
+          expectTypeOf(asyncResult.map(fn)).toEqualTypeOf<AsyncResult<T3, T2>>()
+        })
+      })
+
+      it('should work for ok', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const mapper2 of mapToT3Fns) {
+          const mapper = mock(mapper2)
+          const resolved = await asyncResult.map(mapper)
+          expect(resolved.isOk()).toBe(true)
+          expect(resolved.unwrap()).toEqual(t3)
+          expect(mapper).toHaveBeenCalledTimes(1)
+          expect(mapper).toHaveBeenCalledWith(t1)
+        }
+      })
+
+      it('should work for err', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const mapper2 of mapToT3Fns) {
+          const mapper = mock(mapper2)
+          const resolved = await asyncResult.map(mapper)
+          expect(resolved.isErr()).toBe(true)
+          expect(resolved.unwrapErr()).toEqual(t2)
+          expect(mapper).toHaveBeenCalledTimes(0)
+        }
+      })
     })
 
-    it('should chain map and andThen', async () => {
-      const asyncResult = AsyncResult.from(ok(5))
-      const result = await asyncResult
-        .map((x) => x * 2)
-        .andThen((x) => ok(x + 1))
+    describe('mapErr', () => {
+      const mapErrToT4Fns = [() => t4, async () => t4] as const
 
-      expect(result.isOk()).toBe(true)
-      if (result.isOk()) {
-        expect(result.value).toBe(11) // 5 * 2 + 1
-      }
+      it('should have proper types', () => {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        mapErrToT4Fns.forEach((fn) => {
+          expectTypeOf(asyncResult.mapErr(fn)).toEqualTypeOf<
+            AsyncResult<T1, T4>
+          >()
+        })
+      })
+
+      it('should work for ok', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const mapper2 of mapErrToT4Fns) {
+          const mapper = mock(mapper2)
+          const resolved = await asyncResult.mapErr(mapper)
+          expect(resolved.isOk()).toBe(true)
+          expect(resolved.unwrap()).toEqual(t1)
+          expect(mapper).toHaveBeenCalledTimes(0)
+        }
+      })
+
+      it('should work for err', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const mapper2 of mapErrToT4Fns) {
+          const mapper = mock(mapper2)
+          const resolved = await asyncResult.mapErr(mapper)
+          expect(resolved.isErr()).toBe(true)
+          expect(resolved.unwrapErr()).toEqual(t4)
+          expect(mapper).toHaveBeenCalledTimes(1)
+          expect(mapper).toHaveBeenCalledWith(t2)
+        }
+      })
     })
 
-    it('should handle error recovery with orElse', async () => {
-      const asyncResult = AsyncResult.from(err('error'))
-      const result = await asyncResult.orElse(() => ok(42)).map((x) => x * 2)
+    describe('and', () => {
+      it('should have proper types', () => {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        okT3s.forEach((other) => {
+          expectTypeOf(asyncResult.and(other)).toEqualTypeOf<
+            AsyncResult<T3, T2>
+          >()
+        })
+        errT4s.forEach((other) => {
+          expectTypeOf(asyncResult.and(other)).toEqualTypeOf<
+            AsyncResult<never, T2 | T4>
+          >()
+        })
+        resOkT3T4s.forEach((other) => {
+          expectTypeOf(asyncResult.and(other)).toEqualTypeOf<
+            AsyncResult<T3, T2 | T4>
+          >()
+        })
+      })
 
-      expect(result.isOk()).toBe(true)
-      if (result.isOk()) {
-        expect(result.value).toBe(84)
-      }
+      it('should work for ok to ok', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const other of [...okT3s, ...resOkT3T4s]) {
+          const resolved = await asyncResult.and(other)
+          expect(resolved.isOk()).toBe(true)
+          expect(resolved.unwrap()).toEqual(t3)
+        }
+      })
+
+      it('should work for ok to err', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const other of [...errT4s, ...resErrT3T4s]) {
+          const resolved = await asyncResult.and(other)
+          expect(resolved.isErr()).toBe(true)
+          expect(resolved.unwrapErr()).toEqual(t4)
+        }
+      })
+
+      it('should work for err to any', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const other of [
+          ...okT3s,
+          ...errT4s,
+          ...resOkT3T4s,
+          ...resErrT3T4s,
+        ]) {
+          const resolved = await asyncResult.and(other)
+          expect(resolved.isErr()).toBe(true)
+          expect(resolved.unwrapErr()).toEqual(t2)
+        }
+      })
+    })
+
+    describe('andThen', () => {
+      it('should have proper types', () => {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        okT3Fns.forEach((fn) => {
+          expectTypeOf(asyncResult.andThen(fn)).toEqualTypeOf<
+            AsyncResult<T3, T2>
+          >()
+        })
+        errT4Fns.forEach((fn) => {
+          expectTypeOf(asyncResult.andThen(fn)).toEqualTypeOf<
+            AsyncResult<never, T2 | T4>
+          >()
+        })
+        resOkT3T4Fns.forEach((fn) => {
+          expectTypeOf(asyncResult.andThen(fn)).toEqualTypeOf<
+            AsyncResult<T3, T2 | T4>
+          >()
+        })
+      })
+
+      it('should work for ok to ok', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const fn2 of [...okT3Fns, ...resOkT3T4Fns]) {
+          const fn = mock(fn2)
+          const resolved = await asyncResult.andThen(fn)
+          expect(resolved.isOk()).toBe(true)
+          expect(resolved.unwrap()).toEqual(t3)
+          expect(fn).toHaveBeenCalledTimes(1)
+          expect(fn).toHaveBeenCalledWith(t1)
+        }
+      })
+
+      it('should work for ok to err', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const fn2 of [...errT4Fns, ...resErrT3T4Fns]) {
+          const fn = mock(fn2)
+          const resolved = await asyncResult.andThen(fn)
+          expect(resolved.isErr()).toBe(true)
+          expect(resolved.unwrapErr()).toEqual(t4)
+          expect(fn).toHaveBeenCalledTimes(1)
+          expect(fn).toHaveBeenCalledWith(t1)
+        }
+      })
+
+      it('should work for err to any', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const fn2 of [
+          ...okT3Fns,
+          ...errT4Fns,
+          ...resOkT3T4Fns,
+          ...resErrT3T4Fns,
+        ]) {
+          const fn = mock(fn2)
+          const resolved = await asyncResult.andThen(fn)
+          expect(resolved.isErr()).toBe(true)
+          expect(resolved.unwrapErr()).toEqual(t2)
+          expect(fn).toHaveBeenCalledTimes(0)
+        }
+      })
+    })
+
+    describe('or', () => {
+      it('should have proper types', () => {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        okT3s.forEach((other) => {
+          expectTypeOf(asyncResult.or(other)).toEqualTypeOf<
+            AsyncResult<T1 | T3, never>
+          >()
+        })
+        errT4s.forEach((other) => {
+          expectTypeOf(asyncResult.or(other)).toEqualTypeOf<
+            AsyncResult<T1, T4>
+          >()
+        })
+        resOkT3T4s.forEach((other) => {
+          expectTypeOf(asyncResult.or(other)).toEqualTypeOf<
+            AsyncResult<T1 | T3, T4>
+          >()
+        })
+      })
+
+      it('should work for err to ok', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const other of [...okT3s, ...resOkT3T4s]) {
+          const resolved = await asyncResult.or(other)
+          expect(resolved.isOk()).toBe(true)
+          expect(resolved.unwrap()).toEqual(t3)
+        }
+      })
+
+      it('should work for err to err', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const other of [...errT4s, ...resErrT3T4s]) {
+          const resolved = await asyncResult.or(other)
+          expect(resolved.isErr()).toBe(true)
+          expect(resolved.unwrapErr()).toEqual(t4)
+        }
+      })
+
+      it('should work for ok to any', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const other of [
+          ...okT3s,
+          ...errT4s,
+          ...resOkT3T4s,
+          ...resErrT3T4s,
+        ]) {
+          const resolved = await asyncResult.or(other)
+          expect(resolved.isOk()).toBe(true)
+          expect(resolved.unwrap()).toEqual(t1)
+        }
+      })
+    })
+
+    describe('orElse', () => {
+      it('should have proper types', () => {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        okT3Fns.forEach((fn) => {
+          expectTypeOf(asyncResult.orElse(fn)).toEqualTypeOf<
+            AsyncResult<T1 | T3, never>
+          >()
+        })
+        errT4Fns.forEach((fn) => {
+          expectTypeOf(asyncResult.orElse(fn)).toEqualTypeOf<
+            AsyncResult<T1, T4>
+          >()
+        })
+        resOkT3T4Fns.forEach((fn) => {
+          expectTypeOf(asyncResult.orElse(fn)).toEqualTypeOf<
+            AsyncResult<T1 | T3, T4>
+          >()
+        })
+      })
+
+      it('should work for err to ok', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const fn2 of [...okT3Fns, ...resOkT3T4Fns]) {
+          const fn = mock(fn2)
+          const resolved = await asyncResult.orElse(fn)
+          expect(resolved.isOk()).toBe(true)
+          expect(resolved.unwrap()).toEqual(t3)
+          expect(fn).toHaveBeenCalledTimes(1)
+          expect(fn).toHaveBeenCalledWith(t2)
+        }
+      })
+
+      it('should work for err to err', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const fn2 of [...errT4Fns, ...resErrT3T4Fns]) {
+          const fn = mock(fn2)
+          const resolved = await asyncResult.orElse(fn)
+          expect(resolved.isErr()).toBe(true)
+          expect(resolved.unwrapErr()).toEqual(t4)
+          expect(fn).toHaveBeenCalledTimes(1)
+          expect(fn).toHaveBeenCalledWith(t2)
+        }
+      })
+
+      it('should work for ok to any', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const fn2 of [
+          ...okT3Fns,
+          ...errT4Fns,
+          ...resOkT3T4Fns,
+          ...resErrT3T4Fns,
+        ]) {
+          const fn = mock(fn2)
+          const resolved = await asyncResult.orElse(fn)
+          expect(resolved.isOk()).toBe(true)
+          expect(resolved.unwrap()).toEqual(t1)
+          expect(fn).toHaveBeenCalledTimes(0)
+        }
+      })
+    })
+
+    describe('inspect', () => {
+      const inspectFns = [() => {}, async () => {}] as const
+
+      it('should have proper types', () => {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        inspectFns.forEach((fn) => {
+          expectTypeOf(asyncResult.inspect(fn)).toEqualTypeOf<
+            AsyncResult<T1, T2>
+          >()
+        })
+      })
+
+      it('should work for ok', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const callback2 of inspectFns) {
+          const callback = mock(callback2)
+          const inspected = await asyncResult.inspect(callback)
+          expect(inspected.isOk()).toBe(true)
+          expect(inspected.unwrap()).toEqual(t1)
+          expect(callback).toHaveBeenCalledTimes(1)
+          expect(callback).toHaveBeenCalledWith(t1)
+        }
+      })
+
+      it('should work for err', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const callback2 of inspectFns) {
+          const callback = mock(callback2)
+          const inspected = await asyncResult.inspect(callback)
+          expect(inspected.isErr()).toBe(true)
+          expect(inspected.unwrapErr()).toEqual(t2)
+          expect(callback).toHaveBeenCalledTimes(0)
+        }
+      })
+    })
+
+    describe('inspectErr', () => {
+      const inspectErrFns = [() => {}, async () => {}] as const
+
+      it('should have proper types', () => {
+        const asyncResult = AsyncResult.from(ok(t1) as Result<T1, T2>)
+        inspectErrFns.forEach((fn) => {
+          expectTypeOf(asyncResult.inspectErr(fn)).toEqualTypeOf<
+            AsyncResult<T1, T2>
+          >()
+        })
+      })
+
+      it('should work for ok', async () => {
+        const asyncResult = AsyncResult.from(ok(t1))
+        for (const callback2 of inspectErrFns) {
+          const callback = mock(callback2)
+          const inspected = await asyncResult.inspectErr(callback)
+          expect(inspected.isOk()).toBe(true)
+          expect(inspected.unwrap()).toEqual(t1)
+          expect(callback).toHaveBeenCalledTimes(0)
+        }
+      })
+
+      it('should work for err', async () => {
+        const asyncResult = AsyncResult.from(err(t2))
+        for (const callback2 of inspectErrFns) {
+          const callback = mock(callback2)
+          const inspected = await asyncResult.inspectErr(callback)
+          expect(inspected.isErr()).toBe(true)
+          expect(inspected.unwrapErr()).toEqual(t2)
+          expect(callback).toHaveBeenCalledTimes(1)
+          expect(callback).toHaveBeenCalledWith(t2)
+        }
+      })
     })
   })
 })
 
 describe('AsyncResult utils', () => {
-  describe('merge', () => {
-    it('should merge multiple ok AsyncResults', async () => {
-      const asyncResults = AsyncResult.merge([
-        AsyncResult.from(ok(1)),
-        AsyncResult.from(ok('2')),
-        AsyncResult.from(ok(3n)),
-      ])
-      const results = await asyncResults
-      expect(results.isOk()).toBe(true)
-      const contents = results.unwrap()
-      expect(contents).toEqual([1, '2', 3n])
-    })
-
-    it('should merge to the first err AsyncResult', async () => {
-      const asyncResults = AsyncResult.merge([
-        AsyncResult.from(ok('1')),
-        AsyncResult.from(err('2')),
-        AsyncResult.from(ok(3)),
-        AsyncResult.from(err(4)),
-      ])
-      const results = await asyncResults
-      expect(results.isErr()).toBe(true)
-      const error = results.unwrapErr()
-      expect(error).toBe('2')
-    })
-
-    it('should not early reject on Err value', async () => {
-      const called = [false, false, false]
-      const fn = (i: number) => {
-        called[i] = true
-        return Promise.resolve(err(i))
-      }
-      const asyncResults = AsyncResult.merge([fn(0), fn(1), fn(2)])
-      const results = await asyncResults
-      expect(called).toEqual([true, true, true])
-      expect(results.isErr()).toBe(true)
-      expect(results.unwrapErr()).toBe(0)
-    })
-  })
-
-  describe('all', () => {
+  describe('all & merge', () => {
     it('should resolve to Ok([values]) when all inputs are Ok', async () => {
-      const asyncResults = AsyncResult.all([
-        AsyncResult.from(ok(1)),
-        AsyncResult.from(ok('2')),
-        AsyncResult.from(ok(3n)),
-      ])
-      const result = await asyncResults
-      expect(result.isOk()).toBe(true)
-      expect(result.unwrap()).toEqual([1, '2', 3n])
+      for (const fnName of ['all', 'merge'] as const) {
+        const asyncResults = AsyncResult[fnName]([
+          AsyncResult.from(ok(t1)),
+          AsyncResult.from(ok(t2)),
+          AsyncResult.from(ok(t3)),
+        ])
+        expectTypeOf(asyncResults).toEqualTypeOf<
+          AsyncResult<[T1, T2, T3], never>
+        >()
+        const results = await asyncResults
+        expect(results.unwrap()).toEqual([t1, t2, t3])
+      }
     })
 
-    it('should preserve input order in the Ok array regardless of resolve order', async () => {
-      const slow = AsyncResult.from(
-        new Promise<Result<number, never>>((r) =>
-          setTimeout(() => r(ok(1)), 30),
-        ),
-      )
-      const med = AsyncResult.from(
-        new Promise<Result<number, never>>((r) =>
-          setTimeout(() => r(ok(2)), 10),
-        ),
-      )
-      const fast = AsyncResult.from(ok(3))
-      const result = await AsyncResult.all([slow, med, fast])
-      expect(result.isOk()).toBe(true)
-      expect(result.unwrap()).toEqual([1, 2, 3])
-    })
-
-    it('should fail fast on the first Err without waiting for slow Ok inputs', async () => {
-      let slowResolved = false
-      const slow = AsyncResult.from(
-        new Promise<Result<number, never>>((r) =>
-          setTimeout(() => {
-            slowResolved = true
-            r(ok(1))
-          }, 50),
-        ),
-      )
-      const fast = AsyncResult.from(err('boom'))
-      const result = await AsyncResult.all([slow, fast])
-      expect(result.isErr()).toBe(true)
-      expect(result.unwrapErr()).toBe('boom')
-      expect(slowResolved).toBe(false)
-    })
-
-    it('should return the first Err in time, not in array order', async () => {
+    it.each([
+      ['all', 'time', true],
+      ['merge', 'array order', false],
+    ] as const)('%s should return the first Err in %s', async (fnName, _, isAll) => {
       const slow = AsyncResult.from(
         new Promise<Result<never, string>>((r) =>
           setTimeout(() => r(err('slow')), 30),
@@ -872,23 +602,30 @@ describe('AsyncResult utils', () => {
           setTimeout(() => r(err('fast')), 5),
         ),
       )
-      const result = await AsyncResult.all([slow, fast])
+      const result = await AsyncResult[fnName]([slow, fast])
       expect(result.isErr()).toBe(true)
-      expect(result.unwrapErr()).toBe('fast')
+      expect(result.unwrapErr()).toBe(isAll ? 'fast' : 'slow')
     })
 
-    it('should return Ok([]) for empty input', async () => {
-      const result = await AsyncResult.all([])
-      expect(result.isOk()).toBe(true)
-      expect(result.unwrap()).toEqual([])
-    })
-
-    it('should propagate underlying Promise rejection', async () => {
-      const asyncResult = AsyncResult.all([
-        AsyncResult.from(ok(1)),
-        AsyncResult.from(Promise.reject(new Error('hard fail'))),
-      ])
-      await expect(Promise.resolve(asyncResult)).rejects.toThrow('hard fail')
+    it.each([
+      ['all', 'should', true],
+      ['merge', 'should not', false],
+    ] as const)('%s %s fail fast', async (fnName, _, isAll) => {
+      let slowResolved = false
+      const slow = AsyncResult.from(
+        new Promise<Result<T1, T4>>((r) =>
+          setTimeout(() => {
+            slowResolved = true
+            r(ok(t1))
+          }, 50),
+        ),
+      )
+      const fast = AsyncResult.from(err(t2))
+      const result = await AsyncResult[fnName]([slow, fast])
+      expectTypeOf(result).toEqualTypeOf<Result<[T1, never], T2 | T4>>()
+      expect(result.isErr()).toBe(true)
+      expect(result.unwrapErr()).toBe(t2)
+      expect(slowResolved).toBe(!isAll)
     })
   })
 })
