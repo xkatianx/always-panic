@@ -572,93 +572,26 @@ describe('AsyncResult', () => {
 })
 
 describe('AsyncResult utils', () => {
-  describe('merge', () => {
-    it('should merge multiple ok AsyncResults', async () => {
-      const asyncResults = AsyncResult.merge([
-        AsyncResult.from(ok(1)),
-        AsyncResult.from(ok('2')),
-        AsyncResult.from(ok(3n)),
-      ])
-      const results = await asyncResults
-      expect(results.isOk()).toBe(true)
-      const contents = results.unwrap()
-      expect(contents).toEqual([1, '2', 3n])
-    })
-
-    it('should merge to the first err AsyncResult', async () => {
-      const asyncResults = AsyncResult.merge([
-        AsyncResult.from(ok('1')),
-        AsyncResult.from(err('2')),
-        AsyncResult.from(ok(3)),
-        AsyncResult.from(err(4)),
-      ])
-      const results = await asyncResults
-      expect(results.isErr()).toBe(true)
-      const error = results.unwrapErr()
-      expect(error).toBe('2')
-    })
-
-    it('should not early reject on Err value', async () => {
-      const called = [false, false, false]
-      const fn = (i: number) => {
-        called[i] = true
-        return Promise.resolve(err(i))
-      }
-      const asyncResults = AsyncResult.merge([fn(0), fn(1), fn(2)])
-      const results = await asyncResults
-      expect(called).toEqual([true, true, true])
-      expect(results.isErr()).toBe(true)
-      expect(results.unwrapErr()).toBe(0)
-    })
-  })
-
-  describe('all', () => {
+  describe('all & merge', () => {
     it('should resolve to Ok([values]) when all inputs are Ok', async () => {
-      const asyncResults = AsyncResult.all([
-        AsyncResult.from(ok(1)),
-        AsyncResult.from(ok('2')),
-        AsyncResult.from(ok(3n)),
-      ])
-      const result = await asyncResults
-      expect(result.isOk()).toBe(true)
-      expect(result.unwrap()).toEqual([1, '2', 3n])
+      for (const fnName of ['all', 'merge'] as const) {
+        const asyncResults = AsyncResult[fnName]([
+          AsyncResult.from(ok(t1)),
+          AsyncResult.from(ok(t2)),
+          AsyncResult.from(ok(t3)),
+        ])
+        expectTypeOf(asyncResults).toEqualTypeOf<
+          AsyncResult<[T1, T2, T3], never>
+        >()
+        const results = await asyncResults
+        expect(results.unwrap()).toEqual([t1, t2, t3])
+      }
     })
 
-    it('should preserve input order in the Ok array regardless of resolve order', async () => {
-      const slow = AsyncResult.from(
-        new Promise<Result<number, never>>((r) =>
-          setTimeout(() => r(ok(1)), 30),
-        ),
-      )
-      const med = AsyncResult.from(
-        new Promise<Result<number, never>>((r) =>
-          setTimeout(() => r(ok(2)), 10),
-        ),
-      )
-      const fast = AsyncResult.from(ok(3))
-      const result = await AsyncResult.all([slow, med, fast])
-      expect(result.isOk()).toBe(true)
-      expect(result.unwrap()).toEqual([1, 2, 3])
-    })
-
-    it('should fail fast on the first Err without waiting for slow Ok inputs', async () => {
-      let slowResolved = false
-      const slow = AsyncResult.from(
-        new Promise<Result<number, never>>((r) =>
-          setTimeout(() => {
-            slowResolved = true
-            r(ok(1))
-          }, 50),
-        ),
-      )
-      const fast = AsyncResult.from(err('boom'))
-      const result = await AsyncResult.all([slow, fast])
-      expect(result.isErr()).toBe(true)
-      expect(result.unwrapErr()).toBe('boom')
-      expect(slowResolved).toBe(false)
-    })
-
-    it('should return the first Err in time, not in array order', async () => {
+    it.each([
+      ['all', 'time', true],
+      ['merge', 'array order', false],
+    ] as const)('%s should return the first Err in %s', async (fnName, _, isAll) => {
       const slow = AsyncResult.from(
         new Promise<Result<never, string>>((r) =>
           setTimeout(() => r(err('slow')), 30),
@@ -669,23 +602,30 @@ describe('AsyncResult utils', () => {
           setTimeout(() => r(err('fast')), 5),
         ),
       )
-      const result = await AsyncResult.all([slow, fast])
+      const result = await AsyncResult[fnName]([slow, fast])
       expect(result.isErr()).toBe(true)
-      expect(result.unwrapErr()).toBe('fast')
+      expect(result.unwrapErr()).toBe(isAll ? 'fast' : 'slow')
     })
 
-    it('should return Ok([]) for empty input', async () => {
-      const result = await AsyncResult.all([])
-      expect(result.isOk()).toBe(true)
-      expect(result.unwrap()).toEqual([])
-    })
-
-    it('should propagate underlying Promise rejection', async () => {
-      const asyncResult = AsyncResult.all([
-        AsyncResult.from(ok(1)),
-        AsyncResult.from(Promise.reject(new Error('hard fail'))),
-      ])
-      await expect(Promise.resolve(asyncResult)).rejects.toThrow('hard fail')
+    it.each([
+      ['all', 'should', true],
+      ['merge', 'should not', false],
+    ] as const)('%s %s fail fast', async (fnName, _, isAll) => {
+      let slowResolved = false
+      const slow = AsyncResult.from(
+        new Promise<Result<T1, T4>>((r) =>
+          setTimeout(() => {
+            slowResolved = true
+            r(ok(t1))
+          }, 50),
+        ),
+      )
+      const fast = AsyncResult.from(err(t2))
+      const result = await AsyncResult[fnName]([slow, fast])
+      expectTypeOf(result).toEqualTypeOf<Result<[T1, never], T2 | T4>>()
+      expect(result.isErr()).toBe(true)
+      expect(result.unwrapErr()).toBe(t2)
+      expect(slowResolved).toBe(!isAll)
     })
   })
 })

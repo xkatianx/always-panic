@@ -113,10 +113,9 @@ class AsyncResult<T, E> {
    * const merged = await AsyncResult.merge([asyncResult1, asyncResult2, asyncResult3])
    * expect(merged.unwrapErr()).toBe("2")
    */
-  static merge<const T extends PromiseLike<Result<unknown, unknown>>[]>(
-    results: T,
-  ): AsyncResult<AsyncResultOkTypes<T>, AsyncResultErrTypes<T>[number]> {
-    // @ts-expect-error this should be correct, verified in unit tests
+  static merge<
+    const T extends ReadonlyArray<PromiseLike<Result<unknown, unknown>>>,
+  >(results: T) {
     return new AsyncResult(Promise.all(results).then(util.all))
   }
 
@@ -140,7 +139,9 @@ class AsyncResult<T, E> {
    * const result = await AsyncResult.all([slow, fast])
    * expect(result.unwrapErr()).toBe('boom') // resolves ~immediately
    */
-  static all<const T extends PromiseLike<Result<unknown, unknown>>[]>(
+  static all<
+    const T extends ReadonlyArray<PromiseLike<Result<unknown, unknown>>>,
+  >(
     results: T,
   ): AsyncResult<AsyncResultOkTypes<T>, AsyncResultErrTypes<T>[number]> {
     const promise = new Promise<Result<unknown, unknown>>((resolve, reject) => {
