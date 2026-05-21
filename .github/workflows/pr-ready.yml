@@ -1,12 +1,15 @@
 name: PR ready
 
 on:
-  workflow_run:
-    workflows: ["PR build"]
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number
+        required: true
+        type: string
 
 concurrency:
-  group: pr-ready-${{ github.repository }}-${{ github.event.workflow_run.head_branch }}
+  group: pr-ready-${{ github.repository }}-${{ github.event.inputs.pr_number }}
   cancel-in-progress: true
 
 permissions:
@@ -16,7 +19,6 @@ permissions:
 
 jobs:
   ready:
-    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Resolve PR head
@@ -24,20 +26,17 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const branch = context.payload.workflow_run.head_branch;
             const { owner, repo } = context.repo;
-            const { data: prs } = await github.rest.pulls.list({
+            const prNumber = Number.parseInt(
+              context.payload.inputs.pr_number,
+              10,
+            );
+            const { data: pr } = await github.rest.pulls.get({
               owner,
               repo,
-              head: `${owner}:${branch}`,
-              state: "open",
-              base: "main",
+              pull_number: prNumber,
             });
-            if (prs.length === 0) {
-              core.setFailed(`No open PR to main for branch ${branch}`);
-              return;
-            }
-            const pr = prs[0];
+
             core.setOutput("sha", pr.head.sha);
             core.setOutput("repository", pr.head.repo.full_name);
 

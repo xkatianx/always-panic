@@ -1,24 +1,24 @@
 name: PR build
 
 on:
-  workflow_run:
-    workflows: ["PR verify"]
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number
+        required: true
+        type: string
 
 concurrency:
-  group: pr-build-${{ github.repository }}-${{ github.event.workflow_run.head_branch }}
+  group: pr-build-${{ github.repository }}-${{ github.event.inputs.pr_number }}
   cancel-in-progress: true
 
 permissions:
   contents: write
   pull-requests: read
-  actions: read
+  actions: write
 
 jobs:
   build:
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Resolve PR head
@@ -26,24 +26,25 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const branch = context.payload.workflow_run.head_branch;
             const { owner, repo } = context.repo;
-            const { data: prs } = await github.rest.pulls.list({
+            const prNumber = Number.parseInt(
+              context.payload.inputs.pr_number,
+              10,
+            );
+            const { data: pr } = await github.rest.pulls.get({
               owner,
               repo,
-              head: `${owner}:${branch}`,
-              state: "open",
-              base: "main",
+              pull_number: prNumber,
             });
-            if (prs.length === 0) {
-              core.setFailed(`No open PR to main for branch ${branch}`);
-              return;
-            }
-            const pr = prs[0];
+
             core.setOutput("sha", pr.head.sha);
             core.setOutput("ref", pr.head.ref);
             core.setOutput("repository", pr.head.repo.full_name);
-            core.setOutput("is_fork", pr.head.repo.full_name !== `${owner}/${repo}` ? "true" : "false");
+            core.setOutput("pr_number", String(pr.number));
+            core.setOutput(
+              "is_fork",
+              pr.head.repo.full_name === `${owner}/${repo}` ? "false" : "true",
+            );
 
       - name: Checkout PR head
         uses: actions/checkout@v5
@@ -86,3 +87,27 @@ jobs:
             git diff
             exit 1
           fi
+
+      - name: Trigger PR ready
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = "${{ steps.pr-head.outputs.pr_number }}";
+            const ref = "${{ steps.pr-head.outputs.ref }}";
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: Number.parseInt(prNumber, 10),
+            });
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id: "pr-ready.yml",
+              ref: pr.head.ref,
+              inputs: {
+                pr_number: prNumber,
+              },
+            });
