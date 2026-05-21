@@ -89,25 +89,8 @@ jobs:
           fi
 
       - name: Trigger PR ready
-        uses: actions/github-script@v7
+        uses: benc-uk/workflow-dispatch@v1.3.2
         with:
-          script: |
-            const { owner, repo } = context.repo;
-            const prNumber = "${{ steps.pr-head.outputs.pr_number }}";
-            const ref = "${{ steps.pr-head.outputs.ref }}";
-
-            const { data: pr } = await github.rest.pulls.get({
-              owner,
-              repo,
-              pull_number: Number.parseInt(prNumber, 10),
-            });
-
-            await github.rest.actions.createWorkflowDispatch({
-              owner,
-              repo,
-              workflow_id: "pr-ready.yml",
-              ref: pr.head.ref,
-              inputs: {
-                pr_number: prNumber,
-              },
-            });
+          workflow: pr-ready.yml
+          ref: ${{ steps.pr-head.outputs.ref }}
+          inputs: '{ "pr_number": "${{ steps.pr-head.outputs.pr_number }}" }'
