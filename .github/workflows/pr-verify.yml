@@ -1,4 +1,4 @@
-name: PR to main
+name: PR verify
 
 on:
   pull_request:
@@ -7,11 +7,12 @@ on:
     types: [opened, synchronize, reopened]
 
 concurrency:
-  group: pr-main-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  group: pr-verify-${{ github.repository }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   verify-and-fix:
@@ -56,6 +57,9 @@ jobs:
         if: github.event.pull_request.head.repo.full_name != github.repository
         run: bun run check
 
+      - name: Test
+        run: bun test
+
       - name: Commit Biome fixes
         if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
@@ -69,31 +73,12 @@ jobs:
             git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/${{ github.event.pull_request.head.ref }}"
           fi
 
-      - name: Build
-        run: bun run build
-
-      - name: Commit build artifacts
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No build output changes."
-          else
-            git commit -m "🤖 build files"
-            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/${{ github.event.pull_request.head.ref }}"
-          fi
-
-      - name: Fail if fork PR needs formatting or fixes
+      - name: Fail if fork PR needs formatting
         if: github.event.pull_request.head.repo.full_name != github.repository
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::Working tree dirty after check/build. Run \`bun run check:write\` and \`bun run build\` locally, commit results (including dist if tracked), and push."
+            echo "::error::Working tree dirty after Biome check. Run \`bun run check:write\` locally, commit, and push."
             git status
             git diff
             exit 1
           fi
-
-      - name: Test
-        run: bun test

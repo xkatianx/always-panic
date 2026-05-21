@@ -1,0 +1,88 @@
+name: PR build
+
+on:
+  workflow_run:
+    workflows: ["PR verify"]
+    types: [completed]
+
+concurrency:
+  group: pr-build-${{ github.repository }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: read
+  actions: read
+
+jobs:
+  build:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve PR head
+        id: pr-head
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.payload.workflow_run.head_branch;
+            const { owner, repo } = context.repo;
+            const { data: prs } = await github.rest.pulls.list({
+              owner,
+              repo,
+              head: `${owner}:${branch}`,
+              state: "open",
+              base: "main",
+            });
+            if (prs.length === 0) {
+              core.setFailed(`No open PR to main for branch ${branch}`);
+              return;
+            }
+            const pr = prs[0];
+            core.setOutput("sha", pr.head.sha);
+            core.setOutput("ref", pr.head.ref);
+            core.setOutput("repository", pr.head.repo.full_name);
+            core.setOutput("is_fork", pr.head.repo.full_name !== `${owner}/${repo}` ? "true" : "false");
+
+      - name: Checkout PR head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.pr-head.outputs.sha }}
+          repository: ${{ steps.pr-head.outputs.repository }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Commit build artifacts
+        if: steps.pr-head.outputs.is_fork != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No build output changes."
+          else
+            git commit -m "🤖 build files"
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/${{ steps.pr-head.outputs.ref }}"
+          fi
+
+      - name: Fail if fork PR needs build output committed
+        if: steps.pr-head.outputs.is_fork == 'true'
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Working tree dirty after build. Run \`bun run build\` locally, commit dist, and push."
+            git status
+            git diff
+            exit 1
+          fi

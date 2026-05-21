@@ -1,0 +1,51 @@
+name: PR ready
+
+on:
+  workflow_run:
+    workflows: ["PR build"]
+    types: [completed]
+
+concurrency:
+  group: pr-ready-${{ github.repository }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+
+jobs:
+  ready:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve PR head
+        id: pr-head
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.payload.workflow_run.head_branch;
+            const { owner, repo } = context.repo;
+            const { data: prs } = await github.rest.pulls.list({
+              owner,
+              repo,
+              head: `${owner}:${branch}`,
+              state: "open",
+              base: "main",
+            });
+            if (prs.length === 0) {
+              core.setFailed(`No open PR to main for branch ${branch}`);
+              return;
+            }
+            const pr = prs[0];
+            core.setOutput("sha", pr.head.sha);
+            core.setOutput("repository", pr.head.repo.full_name);
+
+      - name: Checkout PR head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.pr-head.outputs.sha }}
+          repository: ${{ steps.pr-head.outputs.repository }}
+
+      - name: Merge gate passed
+        run: echo "PR head ${{ steps.pr-head.outputs.sha }} is ready to merge."
