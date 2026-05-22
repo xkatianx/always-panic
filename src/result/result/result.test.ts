@@ -238,7 +238,7 @@ describe('Result', () => {
       const mapper = mock(() => t3)
       const mapped = result.map(mapper)
       expect(mapped.unwrapErr()).toEqual(t2)
-      expect(mapped).toBe(result)
+      expect(mapped).toBe<Result<T1, T2>>(result)
       expect(mapper).toHaveBeenCalledTimes(0)
     })
 
@@ -282,7 +282,7 @@ describe('Result', () => {
       const mapper = mock(() => t4)
       const mapped = result.mapErr(mapper)
       expect(mapped.unwrap()).toEqual(t1)
-      expect(mapped).toBe(result)
+      expect(mapped).toBe<Result<T1, T2>>(result)
       expect(mapper).toHaveBeenCalledTimes(0)
     })
 
@@ -470,7 +470,7 @@ describe('Result', () => {
         const chained = result.and(other)
         expect(chained.isErr()).toBe(true)
         expect(chained.unwrapErr()).toBe(t2)
-        expect(chained).toBe(result)
+        expect(chained).toBe<Result<T1, T2>>(result)
         expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2 | T4>>()
       }
       {
@@ -479,7 +479,7 @@ describe('Result', () => {
         const chained = result.and(other)
         expect(chained.isErr()).toBe(true)
         expect(chained.unwrapErr()).toBe(t2)
-        expect(chained).toBe(result)
+        expect(chained).toBe<Result<T1, T2>>(result)
         expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2 | T4>>()
       }
     })
@@ -538,7 +538,7 @@ describe('Result', () => {
         const chained = result.andThen(fn)
         expect(chained.isErr()).toBe(true)
         expect(chained.unwrapErr()).toEqual(t2)
-        expect(chained).toBe(result)
+        expect(chained).toBe<Result<T1, T2>>(result)
         expect(fn).toHaveBeenCalledTimes(0)
         expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T3, T2>>()
       }
@@ -548,7 +548,7 @@ describe('Result', () => {
         const chained = result.andThen(fn)
         expect(chained.isErr()).toBe(true)
         expect(chained.unwrapErr()).toEqual(t2)
-        expect(chained).toBe(result)
+        expect(chained).toBe<Result<T1, T2>>(result)
         expect(fn).toHaveBeenCalledTimes(0)
         expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<never, T2 | T4>>()
       }
@@ -590,7 +590,7 @@ describe('Result', () => {
         const chained = result.or(other)
         expect(chained.isOk()).toBe(true)
         expect(chained.unwrap()).toEqual(t1)
-        expect(chained).toBe(result)
+        expect(chained).toBe<Result<T1, T2>>(result)
         expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, T4>>()
       }
       {
@@ -599,7 +599,7 @@ describe('Result', () => {
         const chained = result.or(other)
         expect(chained.isOk()).toBe(true)
         expect(chained.unwrap()).toEqual(t1)
-        expect(chained).toBe(result)
+        expect(chained).toBe<Result<T1, T2>>(result)
         expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, T4>>()
       }
     })
@@ -656,7 +656,7 @@ describe('Result', () => {
         const chained = result.orElse(fn)
         expect(chained.isOk()).toBe(true)
         expect(chained.unwrap()).toEqual(t1)
-        expect(chained).toBe(result)
+        expect(chained).toBe<Result<T1, T2>>(result)
         expect(fn).toHaveBeenCalledTimes(0)
         expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1 | T3, never>>()
       }
@@ -666,7 +666,7 @@ describe('Result', () => {
         const chained = result.orElse(fn)
         expect(chained.isOk()).toBe(true)
         expect(chained.unwrap()).toEqual(t1)
-        expect(chained).toBe(result)
+        expect(chained).toBe<Result<T1, T2>>(result)
         expect(fn).toHaveBeenCalledTimes(0)
         expectTypeOf(util.asIs(chained)).toEqualTypeOf<Result<T1, T4>>()
       }
