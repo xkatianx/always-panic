@@ -207,6 +207,10 @@ describe('AsyncResult', () => {
         mapToT3Fns.forEach((fn) => {
           expectTypeOf(asyncResult.map(fn)).toEqualTypeOf<AsyncResult<T3, T2>>()
         })
+        asyncResult.map((x) => {
+          expectTypeOf(x).toEqualTypeOf<T1>()
+          return t3
+        })
       })
 
       it('should work for ok', async () => {
@@ -242,6 +246,10 @@ describe('AsyncResult', () => {
           expectTypeOf(asyncResult.mapErr(fn)).toEqualTypeOf<
             AsyncResult<T1, T4>
           >()
+        })
+        asyncResult.mapErr((x) => {
+          expectTypeOf(x).toEqualTypeOf<T2>()
+          return t4
         })
       })
 
@@ -339,6 +347,10 @@ describe('AsyncResult', () => {
           expectTypeOf(asyncResult.andThen(fn)).toEqualTypeOf<
             AsyncResult<T3, T2 | T4>
           >()
+        })
+        asyncResult.andThen((x) => {
+          expectTypeOf(x).toEqualTypeOf<T1>()
+          return ok(t3)
         })
       })
 
@@ -454,6 +466,10 @@ describe('AsyncResult', () => {
             AsyncResult<T1 | T3, T4>
           >()
         })
+        asyncResult.orElse((x) => {
+          expectTypeOf(x).toEqualTypeOf<T2>()
+          return ok(t3)
+        })
       })
 
       it('should work for err to ok', async () => {
@@ -507,6 +523,9 @@ describe('AsyncResult', () => {
             AsyncResult<T1, T2>
           >()
         })
+        asyncResult.inspect((x) => {
+          expectTypeOf(x).toEqualTypeOf<T1>()
+        })
       })
 
       it('should work for ok', async () => {
@@ -542,6 +561,9 @@ describe('AsyncResult', () => {
           expectTypeOf(asyncResult.inspectErr(fn)).toEqualTypeOf<
             AsyncResult<T1, T2>
           >()
+        })
+        asyncResult.inspectErr((x) => {
+          expectTypeOf(x).toEqualTypeOf<T2>()
         })
       })
 

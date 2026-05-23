@@ -1,6 +1,6 @@
 {
   "name": "always-panic",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Typed errors for typescript.",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,12 +20,16 @@
     "format": "biome format --write",
     "lint": "biome lint --write",
     "check": "biome check",
-    "check:write": "biome check --write"
+    "check:write": "biome check --write",
+    "test": "bun test",
+    "verify:build": "bun run build && git diff --exit-code -- dist",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
     "@types/bun": "latest",
-    "typescript": "^5"
+    "husky": "^9.1.7",
+    "typescript": "5.9.3"
   },
   "license": "MIT",
   "keywords": [
