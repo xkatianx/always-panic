@@ -81,6 +81,41 @@ describe('MyError', () => {
     })
   })
 
+  describe('unreachable', () => {
+    it('should create an error with UNREACHABLE code', () => {
+      const error = MyError.unreachable()
+      expect(error).toBeInstanceOf(MyError)
+      expect(error.code).toBe(MyErrorCode.UNREACHABLE)
+    })
+
+    it('should include the reason in the message', () => {
+      const reason = Math.random().toString(36)
+      const error = MyError.unreachable(reason)
+      expect(error.code).toBe(MyErrorCode.UNREACHABLE)
+      expect(error.message).toContain(reason)
+    })
+  })
+
+  describe('toOthers', () => {
+    it('should return a MyError with OTHERS code and the same message', () => {
+      for (const code of [MyErrorCode.UNREACHABLE, MyErrorCode.OTHERS]) {
+        const message = Math.random().toString(36)
+        const cause = new Error('root cause')
+        const original = new MyError(code, message)
+        original.cause = cause
+        const others = original.toOthers()
+        expect(others).toBeInstanceOf(MyError)
+        expect(others.code).toBe(MyErrorCode.OTHERS)
+        expect(original.code).toBe(code)
+        expect(others.message).toBe(message)
+        expect(original.message).toBe(message)
+        expect(others.stack).toBe(original.stack)
+        expect(original.cause).toBe(cause)
+        expect(others.cause).toBe(cause)
+      }
+    })
+  })
+
   describe('try', () => {
     it('should return Ok for successful function', () => {
       const result = MyError.try(() => ok(100))
