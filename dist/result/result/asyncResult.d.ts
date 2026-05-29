@@ -1,4 +1,4 @@
-import type { AsyncResultErrTypes, AsyncResultOkTypes, ErrContent, OkContent, Result, ResultLike } from './type.js';
+import type { AsyncResultErrTypes, AsyncResultOkTypes, DeepReadonly, ErrContent, OkContent, Result, ResultLike } from './type.js';
 declare class AsyncResult<T, E> {
     protected readonly promise: Promise<Result<T, E>>;
     constructor(promise: Promise<Result<T, E>>);
@@ -17,8 +17,8 @@ declare class AsyncResult<T, E> {
     or<R2 extends ResultLike<R2>>(res: R2 | PromiseLike<R2>): AsyncResult<T | OkContent<R2>, ErrContent<R2>>;
     orElse<R2 extends ResultLike<R2>>(fn: (error: E) => R2 | PromiseLike<R2>): AsyncResult<T | OkContent<R2>, ErrContent<R2>>;
     then<TResult1 = Result<T, E>, TResult2 = never>(onfulfilled?: ((value: Result<T, E>) => TResult1 | PromiseLike<TResult1>) | null, onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null): Promise<TResult1 | TResult2>;
-    inspect(fn: (value: T) => void | Promise<void>): AsyncResult<T, E>;
-    inspectErr(fn: (error: E) => void | Promise<void>): AsyncResult<T, E>;
+    inspect(fn: (value: DeepReadonly<T>) => void | Promise<void>): AsyncResult<T, E>;
+    inspectErr(fn: (error: DeepReadonly<E>) => void | Promise<void>): AsyncResult<T, E>;
     /**
      * AsyncResult version of `Promise.all`, but without early rejection.
      * Waits for **every** input to settle, then returns the first `Err` by

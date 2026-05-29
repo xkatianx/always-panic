@@ -1,4 +1,4 @@
-import type { ErrContent, OkContent, Result } from './type.js'
+import type { DeepReadonly, ErrContent, OkContent, Result } from './type.js'
 
 class Ok<T> {
   constructor(public readonly value: T) {}
@@ -65,8 +65,8 @@ class Ok<T> {
     return this
   }
 
-  inspect(fn: (value: T) => void): this {
-    fn(this.value)
+  inspect(fn: (value: DeepReadonly<T>) => void): this {
+    fn(this.value as DeepReadonly<T>)
     return this
   }
 

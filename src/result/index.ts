@@ -1,5 +1,6 @@
 export { default as AsyncResult } from './result/asyncResult.js'
 export type {
+  DeepReadonly,
   ErrContent,
   OkContent,
   Result,

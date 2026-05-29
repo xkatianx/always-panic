@@ -1,4 +1,4 @@
-import type { ErrContent, OkContent, Result } from './type.js';
+import type { DeepReadonly, ErrContent, OkContent, Result } from './type.js';
 declare class Ok<T> {
     readonly value: T;
     constructor(value: T);
@@ -17,7 +17,7 @@ declare class Ok<T> {
     andThen<R extends Result<OkContent<R>, ErrContent<R>>>(fn: (value: T) => R): R;
     or(_res: unknown): this;
     orElse(_fn: unknown): this;
-    inspect(fn: (value: T) => void): this;
+    inspect(fn: (value: DeepReadonly<T>) => void): this;
     inspectErr(_fn: unknown): this;
 }
 export default Ok;

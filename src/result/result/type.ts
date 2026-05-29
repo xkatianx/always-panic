@@ -1,6 +1,22 @@
 import type Err from './err.js'
 import type Ok from './ok.js'
 
+/** Built-in instances whose methods are not deep-readonly-wrapped. */
+type DeepReadonlyBuiltin = Date | RegExp | Error
+
+/**
+ * Recursive readonly view of `T` for inspect callbacks (compile-time only).
+ */
+export type DeepReadonly<T> = T extends DeepReadonlyBuiltin
+  ? T
+  : T extends (...args: infer A) => infer R
+    ? (...args: A) => R
+    : T extends readonly (infer U)[]
+      ? readonly DeepReadonly<U>[]
+      : T extends object
+        ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+        : T
+
 export type OkContent<T> = T extends Ok<infer U> ? U : never
 export type ErrContent<T> = T extends Err<infer U> ? U : never
 
