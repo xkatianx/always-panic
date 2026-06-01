@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it, mock } from 'bun:test'
-import { err, ok, type Result } from '../index.js'
+import { type DeepReadonly, err, ok, type Result } from '../index.js'
 import Err from './err.js'
 import Ok from './ok.js'
 import util from './util.js'
@@ -747,7 +747,7 @@ describe('Result', () => {
       expectTypeOf(
         util.asIs(
           result.inspect((x) => {
-            expectTypeOf(x).toEqualTypeOf<T1>()
+            expectTypeOf(x).toEqualTypeOf<DeepReadonly<T1>>()
           }),
         ),
       ).toEqualTypeOf<Result<T1, T2>>()
@@ -798,7 +798,7 @@ describe('Result', () => {
       expectTypeOf(
         util.asIs(
           result.inspectErr((x) => {
-            expectTypeOf(x).toEqualTypeOf<T2>()
+            expectTypeOf(x).toEqualTypeOf<DeepReadonly<T2>>()
           }),
         ),
       ).toEqualTypeOf<Result<T1, T2>>()

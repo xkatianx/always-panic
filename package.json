@@ -1,6 +1,6 @@
 {
   "name": "always-panic",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Typed errors for typescript.",
   "type": "module",
   "main": "./dist/index.js",

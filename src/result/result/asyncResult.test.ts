@@ -4,7 +4,7 @@ import { err, ok } from '../index.js'
 import AsyncResult from './asyncResult'
 import Err from './err.js'
 import Ok from './ok.js'
-import type { Result } from './type.js'
+import type { DeepReadonly, Result } from './type.js'
 
 type T1 = { T1: number }
 type T2 = { T2: number }
@@ -524,7 +524,7 @@ describe('AsyncResult', () => {
           >()
         })
         asyncResult.inspect((x) => {
-          expectTypeOf(x).toEqualTypeOf<T1>()
+          expectTypeOf(x).toEqualTypeOf<DeepReadonly<T1>>()
         })
       })
 
@@ -563,7 +563,7 @@ describe('AsyncResult', () => {
           >()
         })
         asyncResult.inspectErr((x) => {
-          expectTypeOf(x).toEqualTypeOf<T2>()
+          expectTypeOf(x).toEqualTypeOf<DeepReadonly<T2>>()
         })
       })
 

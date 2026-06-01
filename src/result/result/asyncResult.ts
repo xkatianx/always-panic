@@ -2,6 +2,7 @@ import { err, ok } from '../index.js'
 import type {
   AsyncResultErrTypes,
   AsyncResultOkTypes,
+  DeepReadonly,
   ErrContent,
   OkContent,
   Result,
@@ -76,16 +77,16 @@ class AsyncResult<T, E> {
     return this.promise.then(onfulfilled, onrejected)
   }
 
-  inspect(fn: (value: T) => void | Promise<void>) {
+  inspect(fn: (value: DeepReadonly<T>) => void | Promise<void>) {
     return this.transform(async (r) => {
-      if (r.isOk()) await fn(r.value)
+      if (r.isOk()) await fn(r.value as DeepReadonly<T>)
       return r
     })
   }
 
-  inspectErr(fn: (error: E) => void | Promise<void>) {
+  inspectErr(fn: (error: DeepReadonly<E>) => void | Promise<void>) {
     return this.transform(async (r) => {
-      if (r.isErr()) await fn(r.error)
+      if (r.isErr()) await fn(r.error as DeepReadonly<E>)
       return r
     })
   }

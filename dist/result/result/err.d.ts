@@ -1,4 +1,4 @@
-import type { ErrContent, OkContent, Result } from './type.js';
+import type { DeepReadonly, ErrContent, OkContent, Result } from './type.js';
 declare class Err<E> {
     readonly error: E;
     constructor(error: E);
@@ -18,7 +18,7 @@ declare class Err<E> {
     or<R extends Result<OkContent<R>, ErrContent<R>>>(res: R): R;
     orElse<R extends Result<OkContent<R>, ErrContent<R>>>(fn: (error: E) => R): R;
     inspect(_fn: unknown): this;
-    inspectErr(fn: (error: E) => void): this;
+    inspectErr(fn: (error: DeepReadonly<E>) => void): this;
 }
 export default Err;
 //# sourceMappingURL=err.d.ts.map
