@@ -1,10 +1,13 @@
 import { AsyncResult, err } from '../result/index.js';
 export class MyErrorBase extends Error {
     code;
-    constructor(code, message) {
+    info;
+    constructor(code, message, info) {
         super(message);
         this.name = 'MyErrorBase';
         this.code = code;
+        if (info !== undefined)
+            this.info = info;
     }
     changeMessage(message) {
         this.message = message instanceof Function ? message(this.message) : message;

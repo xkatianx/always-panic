@@ -3,7 +3,8 @@ import { AsyncResult } from '../result/index.js';
 export type Code = number;
 export declare class MyErrorBase<T extends Code> extends Error {
     readonly code: T;
-    constructor(code: T, message: string);
+    info?: unknown;
+    constructor(code: T, message: string, info?: unknown);
     changeMessage(message: string | ((message: string) => string)): this;
     /** Generate an instance of this error from anything. Used by `try`. */
     static fromAny(e: unknown): MyErrorBase<Code>;
