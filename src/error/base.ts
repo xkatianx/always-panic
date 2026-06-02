@@ -10,11 +10,13 @@ export type Code = number
 
 export class MyErrorBase<T extends Code> extends Error {
   readonly code: T
+  info?: unknown
 
-  constructor(code: T, message: string) {
+  constructor(code: T, message: string, info?: unknown) {
     super(message)
     this.name = 'MyErrorBase'
     this.code = code
+    if (info !== undefined) this.info = info
   }
 
   changeMessage(message: string | ((message: string) => string)): this {
