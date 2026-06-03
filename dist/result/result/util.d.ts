@@ -20,4 +20,3 @@ declare const _default: {
     isResult: typeof isResult;
 };
 export default _default;
-//# sourceMappingURL=util.d.ts.map

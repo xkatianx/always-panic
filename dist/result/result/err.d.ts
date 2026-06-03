@@ -21,4 +21,3 @@ declare class Err<E> {
     inspectErr(fn: (error: DeepReadonly<E>) => void): this;
 }
 export default Err;
-//# sourceMappingURL=err.d.ts.map

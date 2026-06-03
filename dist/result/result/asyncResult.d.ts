@@ -66,4 +66,3 @@ declare class AsyncResult<T, E> {
     static all<const T extends ReadonlyArray<PromiseLike<Result<unknown, unknown>>>>(results: T): AsyncResult<AsyncResultOkTypes<T>, AsyncResultErrTypes<T>[number]>;
 }
 export default AsyncResult;
-//# sourceMappingURL=asyncResult.d.ts.map

@@ -1,6 +1,6 @@
 {
   "name": "always-panic",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Typed errors for typescript.",
   "type": "module",
   "main": "./dist/index.js",
@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "bun run build.ts && tsc -p tsconfig.build.json",
     "format": "biome format --write",
     "lint": "biome lint --write",
     "check": "biome check",

@@ -21,4 +21,3 @@ declare class Ok<T> {
     inspectErr(_fn: unknown): this;
 }
 export default Ok;
-//# sourceMappingURL=ok.d.ts.map
