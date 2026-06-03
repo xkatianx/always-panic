@@ -5,7 +5,6 @@ import type {
   OkContent,
   Result,
   ResultErrTypes,
-  ResultLike,
   ResultOkTypes,
 } from './type.js'
 
@@ -21,11 +20,6 @@ function asIs<T extends Result<OkContent<T>, ErrContent<T>>>(
   res: T,
 ): Result<OkContent<T>, ErrContent<T>> {
   return res
-}
-
-function wrapError(e: unknown) {
-  if (e instanceof Error) return err(e)
-  else return err(new Error(String(e)))
 }
 
 /**
@@ -47,10 +41,6 @@ function all<const T extends Result<unknown, unknown>[]>(
   return ok(okResult as ResultOkTypes<T>)
 }
 
-function wrapFn<R extends ResultLike<R>>(fn: () => R) {
-  return asIs(fn())
-}
-
 function isResult<T, E>(value: unknown): value is Result<T, E> {
   return value instanceof Ok || value instanceof Err
 }
@@ -59,8 +49,6 @@ export default {
   ok,
   err,
   asIs,
-  wrapError,
   all,
-  wrapFn,
   isResult,
 }

@@ -857,4 +857,69 @@ describe('utils', () => {
       expectTypeOf(result).toEqualTypeOf<Result<never, T1>>()
     })
   })
+
+  describe('all', () => {
+    it('should return Ok([values]) when every input is Ok', () => {
+      const result = util.all([ok(t1), ok(t2), ok(t3)])
+      expectTypeOf(result).toEqualTypeOf<Result<[T1, T2, T3], never>>()
+      expect(result).toEqual(ok([t1, t2, t3]))
+    })
+
+    it('should return the first Err in array order', () => {
+      const result = util.all([ok(t1), err(t4), err(t2), ok(t3)])
+      expectTypeOf(result).toEqualTypeOf<
+        Result<[T1, never, never, T3], T4 | T2>
+      >()
+      expect(result).toEqual(err(t4))
+    })
+
+    it('should return Ok([]) for an empty array', () => {
+      const result = util.all([])
+      expectTypeOf(result).toEqualTypeOf<Result<[], never>>()
+      expect(result).toEqual(ok([]))
+    })
+  })
+
+  describe('isResult', () => {
+    it('should return true for Ok and Err instances', () => {
+      expect(util.isResult(new Ok(t1))).toBe(true)
+      expect(util.isResult(new Err(t2))).toBe(true)
+      expect(util.isResult(ok(t3))).toBe(true)
+      expect(util.isResult(err(t4))).toBe(true)
+    })
+
+    it('should return false for non-Result values', () => {
+      expect(util.isResult(null)).toBe(false)
+      expect(util.isResult(undefined)).toBe(false)
+      expect(util.isResult(t1)).toBe(false)
+      expect(util.isResult({ isOk: () => true })).toBe(false)
+      expect(util.isResult(Promise.resolve(ok(t1)))).toBe(false)
+    })
+
+    it('should narrow types', () => {
+      const value = ok(t3) as Ok<T1> | Result<T3, T4> | Err<T2> | null | T1 | T2
+      if (util.isResult(value)) {
+        expectTypeOf(util.asIs(value)).toEqualTypeOf<Result<T1 | T3, T2 | T4>>()
+        expect(value.unwrap()).toEqual(t3)
+      } else {
+        expectTypeOf(value).toEqualTypeOf<null | T1 | T2>()
+        expect.unreachable()
+      }
+    })
+  })
+})
+
+describe('equality', () => {
+  it('ok({ a: 1 }) to strict equal ok({ a: 1 })', () => {
+    expect(ok({ a: 1 })).toStrictEqual(ok({ a: 1 }))
+  })
+  it('ok(1) not to be ok(1)', () => {
+    expect(ok(1)).not.toBe(ok(1))
+  })
+  it('err({ a: 1 }) to strict equal err({ a: 1 })', () => {
+    expect(err({ a: 1 })).toStrictEqual(err({ a: 1 }))
+  })
+  it('err(1) not to be err(1)', () => {
+    expect(err(1)).not.toBe(err(1))
+  })
 })
