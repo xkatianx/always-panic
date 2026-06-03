@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "bun run build.ts && tsc -p tsconfig.build.json",
     "format": "biome format --write",
     "lint": "biome lint --write",
     "check": "biome check",

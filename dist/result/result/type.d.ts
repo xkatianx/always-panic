@@ -26,4 +26,3 @@ export type AsyncResultErrTypes<T extends ReadonlyArray<PromiseLike<Result<unkno
     -readonly [key in keyof T]: T[key] extends PromiseLike<Result<unknown, unknown>> ? ErrContent<Awaited<T[key]>> : never;
 };
 export {};
-//# sourceMappingURL=type.d.ts.map

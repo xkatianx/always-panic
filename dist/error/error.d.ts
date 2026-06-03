@@ -13,4 +13,3 @@ export declare class MyError<C extends MyErrorCode> extends MyErrorBase<C> {
     /** Convert to MyErrorCode.OTHERS */
     toOthers(): MyError<MyErrorCode.OTHERS>;
 }
-//# sourceMappingURL=error.d.ts.map

@@ -18,4 +18,3 @@ export declare class MyErrorBase<T extends Code> extends Error {
     /** The async part of `try`. Just use `try` instead. */
     static tryAsync<T extends typeof MyErrorBase, R extends ResultLike<R>>(this: T, fn: () => PromiseLike<R>): AsyncResult<OkContent<R>, ErrContent<R> | ReturnType<T['fromAny']>>;
 }
-//# sourceMappingURL=base.d.ts.map

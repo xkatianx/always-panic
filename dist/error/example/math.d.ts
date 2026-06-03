@@ -10,4 +10,3 @@ export declare class ExampleMathError<C extends ExampleMathErrorCode> extends My
 }
 export declare function myDivide(numerator: number, denominator: number): import("../../result/result/ok.js").default<number> | import("../../result/result/err.js").default<MyError<MyErrorCode.OTHERS> | ExampleMathError<ExampleMathErrorCode.INPUT_IS_NAN> | ExampleMathError<ExampleMathErrorCode.DIVISION_BY_ZERO>>;
 export declare function mySqrt(n: number): import("../../result/index.js").Result<number, MyError<MyErrorCode.OTHERS> | ExampleMathError<ExampleMathErrorCode.INPUT_IS_NAN> | ExampleMathError<ExampleMathErrorCode.OUTPUT_IS_IMAGINARY>>;
-//# sourceMappingURL=math.d.ts.map
