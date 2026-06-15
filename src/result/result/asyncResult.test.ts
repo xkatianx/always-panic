@@ -649,5 +649,37 @@ describe('AsyncResult utils', () => {
       expect(result.unwrapErr()).toBe(t2)
       expect(slowResolved).toBe(!isAll)
     })
+
+    it.each([
+      ['all', ' before fail-fast', true],
+      ['merge', '', false],
+    ] as const)('%s should reject if any input rejects%s', async (fnName, _, isAll) => {
+      const v = Math.random().toString()
+
+      const f1 = async () =>
+        AsyncResult[fnName]([
+          AsyncResult.from(ok(t1)),
+          AsyncResult.from(err(t2)),
+          AsyncResult.from(Promise.reject(new Error(v))),
+        ])
+      if (isAll) expect(f1()).resolves.toEqual(err(t2))
+      else expect(f1()).rejects.toThrow(v)
+
+      const f2 = async () =>
+        AsyncResult[fnName]([
+          AsyncResult.from(ok(t1)),
+          AsyncResult.from(err(t2)),
+          Promise.reject(new Error(v)),
+        ])
+      expect(f2()).rejects.toThrow(v)
+
+      const f3 = async () =>
+        AsyncResult[fnName]([
+          AsyncResult.from(ok(t1)),
+          AsyncResult.from(Promise.reject(new Error(v))),
+          AsyncResult.from(err(t2)),
+        ])
+      expect(f3()).rejects.toThrow(v)
+    })
   })
 })
