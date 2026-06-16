@@ -1,5 +1,5 @@
-import { err, ok } from '../../result/index.js'
-import { MyError, MyErrorBase, MyErrorCode } from '../index.js'
+import { err, ok, result } from '../../result/index.js'
+import { TypedError, UnexpectedError, UnexpectedErrorCode } from '../index.js'
 
 // some functions from other packages
 
@@ -27,7 +27,7 @@ export enum ExampleMathErrorCode {
 
 export class ExampleMathError<
   C extends ExampleMathErrorCode,
-> extends MyErrorBase<C> {
+> extends TypedError<C> {
   constructor(code: C, message: string) {
     super(code, message)
     this.name = 'ExampleMathError'
@@ -43,45 +43,52 @@ export class ExampleMathError<
         )
       }
     }
-    // Fall back to MyError for unknown errors
-    return MyError.fromAny(e)
+    // Fall back to UnexpectedError for unknown errors
+    return UnexpectedError.fromAny(e)
   }
 }
 
 // my function wrapper
 
 export function myDivide(numerator: number, denominator: number) {
-  return ExampleMathError.try(() => ok(divide(numerator, denominator))).mapErr(
-    (e) => {
-      // specific error mapping (with mapErr)
-      if (e instanceof MyError && e.code === MyErrorCode.OTHERS) {
-        const cause = e.cause
-        if (Error.isError(cause) && cause.message === 'denominator is 0')
-          return new ExampleMathError(
-            ExampleMathErrorCode.DIVISION_BY_ZERO,
-            cause.message,
-          )
-      }
-      return e
-    },
+  return result.panic(
+    ExampleMathError.try(() => ok(divide(numerator, denominator))).mapErr(
+      (e) => {
+        // specific error mapping (with mapErr)
+        if (
+          e instanceof UnexpectedError &&
+          e.code === UnexpectedErrorCode.UNKNOWN
+        ) {
+          const cause = e.cause
+          if (Error.isError(cause) && cause.message === 'denominator is 0')
+            return new ExampleMathError(
+              ExampleMathErrorCode.DIVISION_BY_ZERO,
+              cause.message,
+            )
+        }
+        return e
+      },
+    ),
   )
 }
 
 export function mySqrt(n: number) {
-  return ExampleMathError.try(() => {
-    try {
-      return ok(sqrt(n))
-    } catch (e) {
-      // specific error mapping (with try-catch)
-      if (Error.isError(e) && e.message === 'number is negative') {
-        return err(
-          new ExampleMathError(
-            ExampleMathErrorCode.OUTPUT_IS_IMAGINARY,
-            e.message,
-          ),
-        )
+  return result.panic(
+    ExampleMathError.try(() => {
+      try {
+        return ok(sqrt(n))
+      } catch (e) {
+        // specific error mapping (with try-catch)
+        if (Error.isError(e) && e.message === 'number is negative') {
+          return err(
+            new ExampleMathError(
+              ExampleMathErrorCode.OUTPUT_IS_IMAGINARY,
+              e.message,
+            ),
+          )
+        }
+        throw e
       }
-      throw e
-    }
-  })
+    }),
+  )
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { Code } from '../base.js'
-import { MyError, MyErrorCode } from '../error.js'
+import { UnexpectedError, UnexpectedErrorCode } from '../error.js'
 import {
   ExampleMathError,
   ExampleMathErrorCode,
@@ -69,25 +69,17 @@ describe('example (math)', () => {
       expect(error.message).toBe('input is NaN')
     })
 
-    it('should have MyErrorCode.OTHERS for uncaught errors as cause', () => {
-      const result = mySqrt(42)
-      expect(result.isErr()).toBe(true)
-      const error = result.unwrapErr()
-      expect(error).toBeInstanceOf(MyError)
-      expect(error.code).toBe(MyErrorCode.OTHERS)
-      expect(() => result.unwrap()).toThrowError()
+    it('should panic with cause chain for uncaught upstream throw', () => {
+      expect(() => mySqrt(42)).toThrow()
       try {
-        result.unwrap()
+        mySqrt(42)
       } catch (e: unknown) {
         expect(e).toBeInstanceOf(Error)
         if (!(e instanceof Error)) return
-        // unwrap wraps the Err value as `cause`, so e.cause is the MyError.
-        expect(e.cause).toBeInstanceOf(MyError)
-        const myError = e.cause as MyError<Code>
-        expect(myError.code).toBe(MyErrorCode.OTHERS)
-        // MyError.fromAny stores the original thrown Error as `cause`, so the
-        // first user-code frame ("at sqrt") lives on that inner stack.
-        const original = myError.cause
+        expect(e.cause).toBeInstanceOf(UnexpectedError)
+        const unexpected = e.cause as UnexpectedError<Code>
+        expect(unexpected.code).toBe(UnexpectedErrorCode.UNKNOWN)
+        const original = unexpected.cause
         expect(original).toBeInstanceOf(Error)
         if (!(original instanceof Error)) return
         expect(original.message).toBe('boom')

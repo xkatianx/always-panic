@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, it, mock } from 'bun:test'
+import { UnexpectedError, UnexpectedErrorCode } from '../../error/index.js'
 import { type DeepReadonly, err, ok, type Result } from '../index.js'
 import Err from './err.js'
 import Ok from './ok.js'
@@ -905,6 +906,45 @@ describe('utils', () => {
         expectTypeOf(value).toEqualTypeOf<null | T1 | T2>()
         expect.unreachable()
       }
+    })
+  })
+
+  describe('panic', () => {
+    const unexpected = new UnexpectedError(
+      UnexpectedErrorCode.UNKNOWN,
+      'unexpected',
+    )
+
+    it('should return Ok unchanged', () => {
+      const input = ok(t3)
+      const result = util.panic(input)
+      expect(result.isOk()).toBe(true)
+      expect(result.unwrap()).toEqual(t3)
+      expect(result).toBe(input)
+      expectTypeOf(result).toEqualTypeOf<Result<T3, never>>()
+    })
+
+    it('should return Err unchanged for non-UnexpectedError', () => {
+      const result = util.panic(err(t4))
+      expect(result.isErr()).toBe(true)
+      expect(result.unwrapErr()).toEqual(t4)
+      expectTypeOf(result).toEqualTypeOf<Result<never, T4>>()
+    })
+
+    it('should throw UnexpectedError', () => {
+      const result = err(unexpected) as Result<
+        T1,
+        UnexpectedError<UnexpectedErrorCode>
+      >
+      expect(() => util.panic(result)).toThrow()
+    })
+
+    it('should exclude UnexpectedError from the Err union', () => {
+      const result = err(t4) as Result<
+        T1,
+        T4 | UnexpectedError<UnexpectedErrorCode>
+      >
+      expectTypeOf(util.panic(result)).toEqualTypeOf<Result<T1, T4>>()
     })
   })
 })

@@ -1,23 +1,35 @@
-import { MyErrorBase } from './base.js'
+import { TypedError } from './base.js'
 
-export enum MyErrorCode {
-  /** some errors thrown by others' packages not dealt */
-  OTHERS,
-  /** unreachable */
+export enum UnexpectedErrorCode {
+  /** Foreign or unknown failure — promote to a `TypedError` when recognized. */
+  UNKNOWN,
+  /** Branch that should never run (bug in caller or logic). */
   UNREACHABLE,
 }
 
-export class MyError<C extends MyErrorCode> extends MyErrorBase<C> {
+/**
+ * Bucket for **unexpected** failures (usually from `fromAny` after `.try()`).
+ *
+ * Temporary inside integration code: refine `UNKNOWN` into domain `TypedError`s,
+ * then call `result.panic` on what remains before exporting — unexpected errors
+ * should always panic inside your package, not propagate downstream.
+ *
+ * Enables `causeForUnwrap` so `unwrap`/`expect` attach this error (and its
+ * `cause` chain) when tracing upstream bugs.
+ */
+export class UnexpectedError<
+  C extends UnexpectedErrorCode,
+> extends TypedError<C> {
   protected causeForUnwrap = true
 
   constructor(code: C, message: string) {
     super(code, message)
-    this.name = 'MyError'
+    this.name = 'UnexpectedError'
   }
 
   static override fromAny(e: unknown) {
-    const err = new MyError(
-      MyErrorCode.OTHERS,
+    const err = new UnexpectedError(
+      UnexpectedErrorCode.UNKNOWN,
       Error.isError(e) ? e.message : String(e),
     )
     err.cause = e
@@ -25,15 +37,9 @@ export class MyError<C extends MyErrorCode> extends MyErrorBase<C> {
   }
 
   static unreachable(reason: string = '') {
-    return new MyError(MyErrorCode.UNREACHABLE, `unreachable: ${reason}`)
-  }
-
-  /** Convert to MyErrorCode.OTHERS */
-  toOthers() {
-    if (this.code === MyErrorCode.OTHERS) return this
-    const err = new MyError(MyErrorCode.OTHERS, this.message)
-    err.cause = this.cause
-    if (this.stack != null) err.stack = this.stack
-    return err
+    return new UnexpectedError(
+      UnexpectedErrorCode.UNREACHABLE,
+      `unreachable: ${reason}`,
+    )
   }
 }
