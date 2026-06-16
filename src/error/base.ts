@@ -8,13 +8,19 @@ import { AsyncResult, err } from '../result/index.js'
 
 export type Code = number
 
-export class MyErrorBase<T extends Code> extends Error {
+/**
+ * Base class for **expected** (typed) errors — the `E` in exported `Result<T, E>`.
+ *
+ * Subclass with a numeric error-code enum. Callers handle these explicitly;
+ * unwrapping a `TypedError` usually means the call site wrongly assumed success.
+ */
+export class TypedError<T extends Code> extends Error {
   readonly code: T
   info?: unknown
 
   constructor(code: T, message: string, info?: unknown) {
     super(message)
-    this.name = 'MyErrorBase'
+    this.name = 'TypedError'
     this.code = code
     if (info !== undefined) this.info = info
   }
@@ -24,27 +30,32 @@ export class MyErrorBase<T extends Code> extends Error {
     return this
   }
 
-  /** Generate an instance of this error from anything. Used by `try`. */
-  static fromAny(e: unknown): MyErrorBase<Code> {
-    const err = e instanceof Error ? e : new Error(String(e))
-    const base = new MyErrorBase(0, err.message)
-    if (err.stack) base.stack = err.stack
-    if (err.cause) base.cause = err.cause
-    return base
+  /**
+   * Not callable on the base class — override in a domain subclass and fall back
+   * to `UnexpectedError.fromAny(e)` so `E` stays specific. Use `UnexpectedError.try`
+   * when you have no domain error type yet.
+   */
+  static fromAny(_e: unknown): TypedError<Code> {
+    throw new Error(
+      'TypedError.fromAny must not be called; override in a domain subclass and fall back to UnexpectedError.fromAny(e)',
+    )
   }
 
-  /** Try to run a function and return a Result or AsyncResult.
-   *  Anything thrown by the function will be converted by `fromAny`.
+  /**
+   * Convenience boundary: catch throws and return `Result` / `AsyncResult`.
+   * Foreign failures land in `Err` via `fromAny` (often `UnexpectedError` at first).
+   * Refine with `mapErr` / `fromAny`, then `result.panic` on remaining
+   * `UnexpectedError` inside your package — do not export it to downstream callers.
    */
-  static try<T extends typeof MyErrorBase, R extends ResultLike<R>>(
+  static try<T extends typeof TypedError, R extends ResultLike<R>>(
     this: T,
     fn: () => R,
   ): Result<OkContent<R>, ErrContent<R> | ReturnType<T['fromAny']>>
-  static try<T extends typeof MyErrorBase, R extends ResultLike<R>>(
+  static try<T extends typeof TypedError, R extends ResultLike<R>>(
     this: T,
     fn: () => PromiseLike<R>,
   ): AsyncResult<OkContent<R>, ErrContent<R> | ReturnType<T['fromAny']>>
-  static try<T extends typeof MyErrorBase, R extends ResultLike<R>>(
+  static try<T extends typeof TypedError, R extends ResultLike<R>>(
     this: T,
     fn: () => R | PromiseLike<R>,
   ):
@@ -68,7 +79,7 @@ export class MyErrorBase<T extends Code> extends Error {
   }
 
   /** The sync part of `try`. Just use `try` instead. */
-  static trySync<T extends typeof MyErrorBase, R extends ResultLike<R>>(
+  static trySync<T extends typeof TypedError, R extends ResultLike<R>>(
     this: T,
     fn: () => R,
   ): Result<OkContent<R>, ErrContent<R> | ReturnType<T['fromAny']>> {
@@ -80,7 +91,7 @@ export class MyErrorBase<T extends Code> extends Error {
   }
 
   /** The async part of `try`. Just use `try` instead. */
-  static tryAsync<T extends typeof MyErrorBase, R extends ResultLike<R>>(
+  static tryAsync<T extends typeof TypedError, R extends ResultLike<R>>(
     this: T,
     fn: () => PromiseLike<R>,
   ): AsyncResult<OkContent<R>, ErrContent<R> | ReturnType<T['fromAny']>> {

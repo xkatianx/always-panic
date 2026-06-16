@@ -1,175 +1,115 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { AsyncResult, err, ok } from '../result/index.js'
-import { MyErrorBase } from './base.js'
+import { TypedError } from './base.js'
 
-describe('MyErrorBase', () => {
+describe('TypedError', () => {
   describe('constructor', () => {
     it('should create an error with code and message', () => {
-      const error = new MyErrorBase(100, 'Test error message')
-      expect(error.name).toBe('MyErrorBase')
+      const error = new TypedError(100, 'Test error message')
+      expect(error.name).toBe('TypedError')
       expect(error.code).toBe(100)
       expect(error.message).toBe('Test error message')
     })
 
     it('should be instance of Error', () => {
-      const error = new MyErrorBase(200, 'Another error')
+      const error = new TypedError(200, 'Another error')
       expect(error).toBeInstanceOf(Error)
     })
   })
 
   describe('changeMessage', () => {
     it('should change the message to a new string', () => {
-      const error = new MyErrorBase(1, 'old message')
+      const error = new TypedError(1, 'old message')
       error.changeMessage('new message')
       expect(error.message).toBe('new message')
     })
 
     it('should change the message using a callback function', () => {
-      const error = new MyErrorBase(2, 'first')
+      const error = new TypedError(2, 'first')
       error.changeMessage((msg) => `prefix: ${msg}`)
       expect(error.message).toBe('prefix: first')
     })
 
     it('should return `this` from changeMessage', () => {
-      const error = new MyErrorBase(2, 'msg')
+      const error = new TypedError(2, 'msg')
       const returned = error.changeMessage('changed')
       expect(returned).toBe(error)
     })
 
     it('should handle empty string', () => {
-      const error = new MyErrorBase(3, 'not empty')
+      const error = new TypedError(3, 'not empty')
       error.changeMessage('')
       expect(error.message).toBe('')
     })
 
     it('should handle message set to the same value', () => {
-      const error = new MyErrorBase(4, 'msg')
+      const error = new TypedError(4, 'msg')
       error.changeMessage('msg')
       expect(error.message).toBe('msg')
     })
   })
 
   describe('fromAny', () => {
-    it('should convert Error to MyErrorBase', () => {
-      const originalError = new Error('Original error message')
-      originalError.stack = 'Error stack trace'
-      originalError.cause = new Error('Cause error')
-
-      const error = MyErrorBase.fromAny(originalError)
-
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('Original error message')
-      expect(error.stack).toBe('Error stack trace')
-      expect(error.cause).toBe(originalError.cause)
-    })
-
-    it('should handle Error without cause', () => {
-      const originalError = new Error('Error without cause')
-
-      const error = MyErrorBase.fromAny(originalError)
-
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('Error without cause')
-      expect(error.cause).toBeUndefined()
-    })
-
-    it('should convert string to MyErrorBase', () => {
-      const error = MyErrorBase.fromAny('String error')
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('String error')
-    })
-
-    it('should convert number to MyErrorBase', () => {
-      const error = MyErrorBase.fromAny(123)
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('123')
-    })
-
-    it('should convert null to MyErrorBase', () => {
-      const error = MyErrorBase.fromAny(null)
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('null')
-    })
-
-    it('should convert undefined to MyErrorBase', () => {
-      const error = MyErrorBase.fromAny(undefined)
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('undefined')
-    })
-
-    it('should convert object to MyErrorBase', () => {
-      const error = MyErrorBase.fromAny({ key: 'value' })
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('[object Object]')
-    })
-
-    it('should convert array to MyErrorBase', () => {
-      const error = MyErrorBase.fromAny([1, 2, 3])
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('1,2,3')
+    it('should throw when called on the base class', () => {
+      expect(() => TypedError.fromAny(new Error('x'))).toThrow(
+        'TypedError.fromAny must not be called',
+      )
     })
   })
 
   describe('try', () => {
     describe('with sync fn', () => {
       it('should return a sync Result (not AsyncResult) for Ok', () => {
-        const result = MyErrorBase.try(() => ok(42))
+        const result = TypedError.try(() => ok(42))
         expect(result).not.toBeInstanceOf(AsyncResult)
         expect(result.isOk()).toBe(true)
         expect(result.unwrap()).toBe(42)
       })
 
-      it('should return Err for Error thrown in sync fn', () => {
-        const result = MyErrorBase.try(() => {
-          throw new Error('Test error')
-        })
-        expect(result).not.toBeInstanceOf(AsyncResult)
-        expect(result.isErr()).toBe(true)
-        const error = result.unwrapErr()
-        expect(error).toBeInstanceOf(MyErrorBase)
-        expect(error.message).toBe('Test error')
+      it('should rethrow when sync fn throws (base fromAny is not callable)', () => {
+        expect(() =>
+          TypedError.try(() => {
+            throw new Error('Test error')
+          }),
+        ).toThrow('TypedError.fromAny must not be called')
       })
 
-      it('should return Err for non-Error thrown in sync fn', () => {
-        const result = MyErrorBase.try(() => {
-          throw 'String error'
-        })
-        expect(result.isErr()).toBe(true)
-        const error = result.unwrapErr()
-        expect(error).toBeInstanceOf(MyErrorBase)
-        expect(error.message).toBe('String error')
+      it('should rethrow when sync fn throws non-Error', () => {
+        expect(() =>
+          TypedError.try(() => {
+            throw 'String error'
+          }),
+        ).toThrow('TypedError.fromAny must not be called')
       })
 
       it('should return Err for Result error', () => {
-        const result = MyErrorBase.try(() => err('Result error'))
+        const result = TypedError.try(() => err('Result error'))
         expect(result.isErr()).toBe(true)
         expect(result.unwrapErr()).toBe('Result error')
       })
 
-      it('should handle nested errors', () => {
-        const result = MyErrorBase.try(() => {
-          try {
-            throw new Error('Inner error')
-          } catch {
-            throw new Error('Outer error')
-          }
-        })
-        expect(result.isErr()).toBe(true)
-        const error = result.unwrapErr()
-        expect(error).toBeInstanceOf(MyErrorBase)
-        expect(error.message).toBe('Outer error')
+      it('should rethrow when nested throws escape', () => {
+        expect(() =>
+          TypedError.try(() => {
+            try {
+              throw new Error('Inner error')
+            } catch {
+              throw new Error('Outer error')
+            }
+          }),
+        ).toThrow('TypedError.fromAny must not be called')
       })
 
       it('should invoke fn exactly once', () => {
         const fn = mock(() => ok(1))
-        MyErrorBase.try(fn)
+        TypedError.try(fn)
         expect(fn).toHaveBeenCalledTimes(1)
       })
     })
 
     describe('with async fn', () => {
       it('should return an AsyncResult for Ok', async () => {
-        const pending = MyErrorBase.try(async () => {
+        const pending = TypedError.try(async () => {
           await new Promise((resolve) => setTimeout(resolve, 10))
           return ok('success')
         })
@@ -179,28 +119,28 @@ describe('MyErrorBase', () => {
         expect(result.unwrap()).toBe('success')
       })
 
-      it('should return Err for Error thrown in async fn', async () => {
-        const result = await MyErrorBase.try(async () => {
-          throw new Error('Async error')
-        })
-        expect(result.isErr()).toBe(true)
-        const error = result.unwrapErr()
-        expect(error).toBeInstanceOf(MyErrorBase)
-        expect(error.message).toBe('Async error')
+      it('should rethrow when async fn throws', async () => {
+        await expect(
+          Promise.resolve(
+            TypedError.try(async () => {
+              throw new Error('Async error')
+            }),
+          ),
+        ).rejects.toThrow('TypedError.fromAny must not be called')
       })
 
-      it('should return Err for non-Error rejection', async () => {
-        const result = await MyErrorBase.try(async () => {
-          throw 'String error'
-        })
-        expect(result.isErr()).toBe(true)
-        const error = result.unwrapErr()
-        expect(error).toBeInstanceOf(MyErrorBase)
-        expect(error.message).toBe('String error')
+      it('should rethrow when async fn rejects with non-Error', async () => {
+        await expect(
+          Promise.resolve(
+            TypedError.try(async () => {
+              throw 'String error'
+            }),
+          ),
+        ).rejects.toThrow('TypedError.fromAny must not be called')
       })
 
       it('should route a non-async fn that returns a Promise through tryAsync', async () => {
-        const pending = MyErrorBase.try(() => Promise.resolve(ok('promise-fn')))
+        const pending = TypedError.try(() => Promise.resolve(ok('promise-fn')))
         expect(pending).toBeInstanceOf(AsyncResult)
         const result = await pending
         expect(result.isOk()).toBe(true)
@@ -209,7 +149,7 @@ describe('MyErrorBase', () => {
 
       it('should invoke fn exactly once', async () => {
         const fn = mock(async () => ok(1))
-        await MyErrorBase.try(fn)
+        await TypedError.try(fn)
         expect(fn).toHaveBeenCalledTimes(1)
       })
     })
@@ -217,34 +157,30 @@ describe('MyErrorBase', () => {
 
   describe('trySync', () => {
     it('should return Ok for successful sync fn', () => {
-      const result = MyErrorBase.trySync(() => ok(42))
+      const result = TypedError.trySync(() => ok(42))
       expect(result).not.toBeInstanceOf(AsyncResult)
       expect(result.isOk()).toBe(true)
       expect(result.unwrap()).toBe(42)
     })
 
-    it('should return Err for Error thrown in fn', () => {
-      const result = MyErrorBase.trySync(() => {
-        throw new Error('Test error')
-      })
-      expect(result.isErr()).toBe(true)
-      const error = result.unwrapErr()
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('Test error')
+    it('should rethrow when fn throws', () => {
+      expect(() =>
+        TypedError.trySync(() => {
+          throw new Error('Test error')
+        }),
+      ).toThrow('TypedError.fromAny must not be called')
     })
 
-    it('should return Err for non-Error thrown in fn', () => {
-      const result = MyErrorBase.trySync(() => {
-        throw 'String error'
-      })
-      expect(result.isErr()).toBe(true)
-      const error = result.unwrapErr()
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('String error')
+    it('should rethrow when fn throws non-Error', () => {
+      expect(() =>
+        TypedError.trySync(() => {
+          throw 'String error'
+        }),
+      ).toThrow('TypedError.fromAny must not be called')
     })
 
     it('should pass through Err Result without wrapping', () => {
-      const result = MyErrorBase.trySync(() => err('Result error'))
+      const result = TypedError.trySync(() => err('Result error'))
       expect(result.isErr()).toBe(true)
       expect(result.unwrapErr()).toBe('Result error')
     })
@@ -252,12 +188,12 @@ describe('MyErrorBase', () => {
 
   describe('tryAsync', () => {
     it('should always return an AsyncResult', () => {
-      const pending = MyErrorBase.tryAsync(async () => ok(1))
+      const pending = TypedError.tryAsync(async () => ok(1))
       expect(pending).toBeInstanceOf(AsyncResult)
     })
 
     it('should return Ok for successful async fn', async () => {
-      const result = await MyErrorBase.tryAsync(async () => {
+      const result = await TypedError.tryAsync(async () => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         return ok('success')
       })
@@ -265,34 +201,34 @@ describe('MyErrorBase', () => {
       expect(result.unwrap()).toBe('success')
     })
 
-    it('should return Err for Error thrown in async fn', async () => {
-      const result = await MyErrorBase.tryAsync(async () => {
-        throw new Error('Async error')
-      })
-      expect(result.isErr()).toBe(true)
-      const error = result.unwrapErr()
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('Async error')
+    it('should rethrow when async fn throws', async () => {
+      await expect(
+        Promise.resolve(
+          TypedError.tryAsync(async () => {
+            throw new Error('Async error')
+          }),
+        ),
+      ).rejects.toThrow('TypedError.fromAny must not be called')
     })
 
-    it('should return Err for non-Error rejection', async () => {
-      const result = await MyErrorBase.tryAsync(async () => {
-        throw 'String error'
-      })
-      expect(result.isErr()).toBe(true)
-      const error = result.unwrapErr()
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.message).toBe('String error')
+    it('should rethrow when async fn rejects with non-Error', async () => {
+      await expect(
+        Promise.resolve(
+          TypedError.tryAsync(async () => {
+            throw 'String error'
+          }),
+        ),
+      ).rejects.toThrow('TypedError.fromAny must not be called')
     })
 
     it('should pass through Err Result without wrapping', async () => {
-      const result = await MyErrorBase.tryAsync(async () => err('Result error'))
+      const result = await TypedError.tryAsync(async () => err('Result error'))
       expect(result.isErr()).toBe(true)
       expect(result.unwrapErr()).toBe('Result error')
     })
 
     it('should accept a non-async fn returning a Promise', async () => {
-      const result = await MyErrorBase.tryAsync(() =>
+      const result = await TypedError.tryAsync(() =>
         Promise.resolve(ok('from promise')),
       )
       expect(result.isOk()).toBe(true)

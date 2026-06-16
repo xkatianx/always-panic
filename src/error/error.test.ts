@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'bun:test'
 import { err, ok } from '../result/index.js'
-import { MyErrorBase } from './base.js'
-import { MyError, MyErrorCode } from './error.js'
+import { TypedError } from './base.js'
+import { UnexpectedError, UnexpectedErrorCode } from './error.js'
 
-describe('MyError', () => {
+describe('UnexpectedError', () => {
   describe('constructor', () => {
     it('should create an error with code and message', () => {
-      const error = new MyError(MyErrorCode.OTHERS, 'Test error')
+      const error = new UnexpectedError(
+        UnexpectedErrorCode.UNKNOWN,
+        'Test error',
+      )
       expect(error).toBeInstanceOf(Error)
-      expect(error).toBeInstanceOf(MyErrorBase)
-      expect(error.name).toBe('MyError')
-      expect(error.code).toBe(MyErrorCode.OTHERS)
+      expect(error).toBeInstanceOf(TypedError)
+      expect(error.name).toBe('UnexpectedError')
+      expect(error.code).toBe(UnexpectedErrorCode.UNKNOWN)
       expect(error.message).toBe('Test error')
     })
   })
@@ -18,10 +21,10 @@ describe('MyError', () => {
   describe('fromAny', () => {
     it('should wrap an Error as cause and copy its message', () => {
       const originalError = new Error('Original error')
-      const error = MyError.fromAny(originalError)
+      const error = UnexpectedError.fromAny(originalError)
 
-      expect(error).toBeInstanceOf(MyError)
-      expect(error.code).toBe(MyErrorCode.OTHERS)
+      expect(error).toBeInstanceOf(UnexpectedError)
+      expect(error.code).toBe(UnexpectedErrorCode.UNKNOWN)
       expect(error.message).toBe('Original error')
       expect(error.cause).toBe(originalError)
     })
@@ -29,7 +32,7 @@ describe('MyError', () => {
     it('should preserve an Error chain by wrapping the input as cause', () => {
       const inner = new Error('Inner')
       const outer = new Error('Outer', { cause: inner })
-      const error = MyError.fromAny(outer)
+      const error = UnexpectedError.fromAny(outer)
 
       expect(error.cause).toBe(outer)
       expect((error.cause as Error).cause).toBe(inner)
@@ -39,43 +42,43 @@ describe('MyError', () => {
       const originalError = new Error('Original error')
       originalError.stack = 'fake stack'
 
-      const error = MyError.fromAny(originalError)
+      const error = UnexpectedError.fromAny(originalError)
 
       expect(typeof error.stack).toBe('string')
       expect(error.stack).not.toBe('fake stack')
     })
 
     it('should wrap a string value as cause and stringify the message', () => {
-      const error = MyError.fromAny('String value')
-      expect(error).toBeInstanceOf(MyError)
-      expect(error.code).toBe(MyErrorCode.OTHERS)
+      const error = UnexpectedError.fromAny('String value')
+      expect(error).toBeInstanceOf(UnexpectedError)
+      expect(error.code).toBe(UnexpectedErrorCode.UNKNOWN)
       expect(error.message).toBe('String value')
       expect(error.cause).toBe('String value')
     })
 
     it('should wrap a number value as cause', () => {
-      const error = MyError.fromAny(42)
-      expect(error).toBeInstanceOf(MyError)
-      expect(error.code).toBe(MyErrorCode.OTHERS)
+      const error = UnexpectedError.fromAny(42)
+      expect(error).toBeInstanceOf(UnexpectedError)
+      expect(error.code).toBe(UnexpectedErrorCode.UNKNOWN)
       expect(error.message).toBe('42')
       expect(error.cause).toBe(42)
     })
 
     it('should wrap an object value as cause', () => {
       const payload = { test: 'value' }
-      const error = MyError.fromAny(payload)
-      expect(error).toBeInstanceOf(MyError)
-      expect(error.code).toBe(MyErrorCode.OTHERS)
+      const error = UnexpectedError.fromAny(payload)
+      expect(error).toBeInstanceOf(UnexpectedError)
+      expect(error.code).toBe(UnexpectedErrorCode.UNKNOWN)
       expect(error.message).toBe('[object Object]')
       expect(error.cause).toBe(payload)
     })
 
     it('should wrap null and undefined as cause', () => {
-      const nullError = MyError.fromAny(null)
+      const nullError = UnexpectedError.fromAny(null)
       expect(nullError.message).toBe('null')
       expect(nullError.cause).toBeNull()
 
-      const undefinedError = MyError.fromAny(undefined)
+      const undefinedError = UnexpectedError.fromAny(undefined)
       expect(undefinedError.message).toBe('undefined')
       expect(undefinedError.cause).toBeUndefined()
     })
@@ -83,70 +86,50 @@ describe('MyError', () => {
 
   describe('unreachable', () => {
     it('should create an error with UNREACHABLE code', () => {
-      const error = MyError.unreachable()
-      expect(error).toBeInstanceOf(MyError)
-      expect(error.code).toBe(MyErrorCode.UNREACHABLE)
+      const error = UnexpectedError.unreachable()
+      expect(error).toBeInstanceOf(UnexpectedError)
+      expect(error.code).toBe(UnexpectedErrorCode.UNREACHABLE)
     })
 
     it('should include the reason in the message', () => {
       const reason = Math.random().toString(36)
-      const error = MyError.unreachable(reason)
-      expect(error.code).toBe(MyErrorCode.UNREACHABLE)
+      const error = UnexpectedError.unreachable(reason)
+      expect(error.code).toBe(UnexpectedErrorCode.UNREACHABLE)
       expect(error.message).toContain(reason)
-    })
-  })
-
-  describe('toOthers', () => {
-    it('should return a MyError with OTHERS code and the same message', () => {
-      for (const code of [MyErrorCode.UNREACHABLE, MyErrorCode.OTHERS]) {
-        const message = Math.random().toString(36)
-        const cause = new Error('root cause')
-        const original = new MyError(code, message)
-        original.cause = cause
-        const others = original.toOthers()
-        expect(others).toBeInstanceOf(MyError)
-        expect(others.code).toBe(MyErrorCode.OTHERS)
-        expect(original.code).toBe(code)
-        expect(others.message).toBe(message)
-        expect(original.message).toBe(message)
-        expect(others.stack).toBe(original.stack)
-        expect(original.cause).toBe(cause)
-        expect(others.cause).toBe(cause)
-      }
     })
   })
 
   describe('try', () => {
     it('should return Ok for successful function', () => {
-      const result = MyError.try(() => ok(100))
+      const result = UnexpectedError.try(() => ok(100))
       expect(result.isOk()).toBe(true)
       expect(result.unwrap()).toBe(100)
     })
 
-    it('should return Err with MyError for Error thrown', () => {
-      const result = MyError.try(() => {
+    it('should return Err with UnexpectedError for Error thrown', () => {
+      const result = UnexpectedError.try(() => {
         throw new Error('Test error')
       })
       expect(result.isErr()).toBe(true)
       const error = result.unwrapErr()
-      expect(error).toBeInstanceOf(MyError)
-      expect(error.code).toBe(MyErrorCode.OTHERS)
+      expect(error).toBeInstanceOf(UnexpectedError)
+      expect(error.code).toBe(UnexpectedErrorCode.UNKNOWN)
       expect(error.message).toBe('Test error')
     })
 
-    it('should return Err with MyError for non-Error thrown', () => {
-      const result = MyError.try(() => {
+    it('should return Err with UnexpectedError for non-Error thrown', () => {
+      const result = UnexpectedError.try(() => {
         throw 'String error'
       })
       expect(result.isErr()).toBe(true)
       const error = result.unwrapErr()
-      expect(error).toBeInstanceOf(MyError)
-      expect(error.code).toBe(MyErrorCode.OTHERS)
+      expect(error).toBeInstanceOf(UnexpectedError)
+      expect(error.code).toBe(UnexpectedErrorCode.UNKNOWN)
       expect(error.message).toBe('String error')
     })
 
     it('should accept functions that return two different ok types and two different err types', () => {
-      const result = MyError.try(() => {
+      const result = UnexpectedError.try(() => {
         if (Math.random() > 1) return ok(1 as const)
         if (Math.random() > 1) return ok(2 as const)
         if (Math.random() > 1) return err(3 as const)
