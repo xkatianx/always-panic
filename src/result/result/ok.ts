@@ -1,6 +1,12 @@
-import type { DeepReadonly, ErrContent, OkContent, Result } from './type.js'
+import type {
+  DeepReadonly,
+  ErrContent,
+  OkContent,
+  Result,
+  ResultBase,
+} from './type.js'
 
-class Ok<T> {
+class Ok<T> implements ResultBase<T, never> {
   constructor(public readonly value: T) {}
 
   isOk(): this is Ok<T> {

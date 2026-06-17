@@ -4,6 +4,7 @@ export type {
   ErrContent,
   OkContent,
   Result,
+  ResultBase,
   ResultLike,
 } from './result/type.js'
 export { result }

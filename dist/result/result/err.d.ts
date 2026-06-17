@@ -1,5 +1,5 @@
-import type { DeepReadonly, ErrContent, OkContent, Result } from './type.js';
-declare class Err<E> {
+import type { DeepReadonly, ErrContent, OkContent, Result, ResultBase } from './type.js';
+declare class Err<E> implements ResultBase<never, E> {
     readonly error: E;
     constructor(error: E);
     isOk(): this is never;
