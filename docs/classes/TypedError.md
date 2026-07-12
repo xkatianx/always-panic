@@ -1,4 +1,4 @@
-[**always-panic v0.8.1**](../README.md)
+[**always-panic v0.8.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: TypedError\<T\>
 
-Defined in: [src/error/base.ts:17](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L17)
+Defined in: [src/error/base.ts:17](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L17)
 
 Base class for **expected** (typed) errors — the `E` in exported `Result<T, E>`.
 
@@ -33,7 +33,7 @@ unwrapping a `TypedError` usually means the call site wrongly assumed success.
 
 > **new TypedError**\<`T`\>(`code`, `message`, `info?`): `TypedError`\<`T`\>
 
-Defined in: [src/error/base.ts:21](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L21)
+Defined in: [src/error/base.ts:21](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L21)
 
 #### Parameters
 
@@ -77,7 +77,7 @@ The cause of the error.
 
 > `readonly` **code**: `T`
 
-Defined in: [src/error/base.ts:18](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L18)
+Defined in: [src/error/base.ts:18](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L18)
 
 ***
 
@@ -85,7 +85,7 @@ Defined in: [src/error/base.ts:18](https://github.com/xkatianx/always-panic/blob
 
 > `optional` **info?**: `unknown`
 
-Defined in: [src/error/base.ts:19](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L19)
+Defined in: [src/error/base.ts:19](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L19)
 
 ***
 
@@ -151,7 +151,7 @@ not capture any frames.
 
 > **changeMessage**(`message`): `this`
 
-Defined in: [src/error/base.ts:28](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L28)
+Defined in: [src/error/base.ts:28](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L28)
 
 #### Parameters
 
@@ -267,7 +267,7 @@ Create .stack property on a target object
 
 > `static` **fromAny**(`_e`): `TypedError`\<`number`\>
 
-Defined in: [src/error/base.ts:38](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L38)
+Defined in: [src/error/base.ts:38](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L38)
 
 Not callable on the base class — override in a domain subclass and fall back
 to `UnexpectedError.fromAny(e)` so `E` stays specific. Use `UnexpectedError.try`
@@ -373,7 +373,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 > `static` **try**\<`T`, `R`\>(`this`, `fn`): [`Result`](../type-aliases/Result.md)\<[`OkContent`](../type-aliases/OkContent.md)\<`R`\>, [`ErrContent`](../type-aliases/ErrContent.md)\<`R`\> \| `ReturnType`\<`T`\[`"fromAny"`\]\>\>
 
-Defined in: [src/error/base.ts:50](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L50)
+Defined in: [src/error/base.ts:50](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L50)
 
 Convenience boundary: catch throws and return `Result` / `AsyncResult`.
 Foreign failures land in `Err` via `fromAny` (often `UnexpectedError` at first).
@@ -408,7 +408,7 @@ Refine with `mapErr` / `fromAny`, then `result.panic` on remaining
 
 > `static` **try**\<`T`, `R`\>(`this`, `fn`): [`AsyncResult`](AsyncResult.md)\<[`OkContent`](../type-aliases/OkContent.md)\<`R`\>, [`ErrContent`](../type-aliases/ErrContent.md)\<`R`\> \| `ReturnType`\<`T`\[`"fromAny"`\]\>\>
 
-Defined in: [src/error/base.ts:54](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L54)
+Defined in: [src/error/base.ts:54](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L54)
 
 Convenience boundary: catch throws and return `Result` / `AsyncResult`.
 Foreign failures land in `Err` via `fromAny` (often `UnexpectedError` at first).
@@ -445,7 +445,7 @@ Refine with `mapErr` / `fromAny`, then `result.panic` on remaining
 
 > `static` **tryAsync**\<`T`, `R`\>(`this`, `fn`): [`AsyncResult`](AsyncResult.md)\<[`OkContent`](../type-aliases/OkContent.md)\<`R`\>, [`ErrContent`](../type-aliases/ErrContent.md)\<`R`\> \| `ReturnType`\<`T`\[`"fromAny"`\]\>\>
 
-Defined in: [src/error/base.ts:94](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L94)
+Defined in: [src/error/base.ts:94](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L94)
 
 The async part of `try`. Just use `try` instead.
 
@@ -479,7 +479,7 @@ The async part of `try`. Just use `try` instead.
 
 > `static` **trySync**\<`T`, `R`\>(`this`, `fn`): [`Result`](../type-aliases/Result.md)\<[`OkContent`](../type-aliases/OkContent.md)\<`R`\>, [`ErrContent`](../type-aliases/ErrContent.md)\<`R`\> \| `ReturnType`\<`T`\[`"fromAny"`\]\>\>
 
-Defined in: [src/error/base.ts:82](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/error/base.ts#L82)
+Defined in: [src/error/base.ts:82](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/base.ts#L82)
 
 The sync part of `try`. Just use `try` instead.
 

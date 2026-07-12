@@ -1,4 +1,4 @@
-[**always-panic v0.8.1**](../README.md)
+[**always-panic v0.8.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: AsyncResult\<T, E\>
 
-Defined in: [src/result/result/asyncResult.ts:13](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L13)
+Defined in: [src/result/result/asyncResult.ts:13](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L13)
 
 ## Type Parameters
 
@@ -24,7 +24,7 @@ Defined in: [src/result/result/asyncResult.ts:13](https://github.com/xkatianx/al
 
 > **new AsyncResult**\<`T`, `E`\>(`promise`): `AsyncResult`\<`T`, `E`\>
 
-Defined in: [src/result/result/asyncResult.ts:14](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L14)
+Defined in: [src/result/result/asyncResult.ts:14](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L14)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [src/result/result/asyncResult.ts:14](https://github.com/xkatianx/al
 
 > `protected` `readonly` **promise**: `Promise`\<[`Result`](../type-aliases/Result.md)\<`T`, `E`\>\>
 
-Defined in: [src/result/result/asyncResult.ts:14](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L14)
+Defined in: [src/result/result/asyncResult.ts:14](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L14)
 
 ## Methods
 
@@ -50,7 +50,7 @@ Defined in: [src/result/result/asyncResult.ts:14](https://github.com/xkatianx/al
 
 > **and**\<`R2`\>(`res`): `AsyncResult`\<[`OkContent`](../type-aliases/OkContent.md)\<`R2`\>, `E` \| [`ErrContent`](../type-aliases/ErrContent.md)\<`R2`\>\>
 
-Defined in: [src/result/result/asyncResult.ts:46](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L46)
+Defined in: [src/result/result/asyncResult.ts:46](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L46)
 
 #### Type Parameters
 
@@ -74,7 +74,7 @@ Defined in: [src/result/result/asyncResult.ts:46](https://github.com/xkatianx/al
 
 > **andThen**\<`R2`\>(`fn`): `AsyncResult`\<[`OkContent`](../type-aliases/OkContent.md)\<`R2`\>, `E` \| [`ErrContent`](../type-aliases/ErrContent.md)\<`R2`\>\>
 
-Defined in: [src/result/result/asyncResult.ts:52](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L52)
+Defined in: [src/result/result/asyncResult.ts:52](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L52)
 
 #### Type Parameters
 
@@ -98,7 +98,7 @@ Defined in: [src/result/result/asyncResult.ts:52](https://github.com/xkatianx/al
 
 > **inspect**(`fn`): `AsyncResult`\<`T`, `E`\>
 
-Defined in: [src/result/result/asyncResult.ts:80](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L80)
+Defined in: [src/result/result/asyncResult.ts:80](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L80)
 
 #### Parameters
 
@@ -116,7 +116,7 @@ Defined in: [src/result/result/asyncResult.ts:80](https://github.com/xkatianx/al
 
 > **inspectErr**(`fn`): `AsyncResult`\<`T`, `E`\>
 
-Defined in: [src/result/result/asyncResult.ts:87](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L87)
+Defined in: [src/result/result/asyncResult.ts:87](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L87)
 
 #### Parameters
 
@@ -134,7 +134,7 @@ Defined in: [src/result/result/asyncResult.ts:87](https://github.com/xkatianx/al
 
 > **map**\<`T2`\>(`fn`): `AsyncResult`\<`T2`, `E`\>
 
-Defined in: [src/result/result/asyncResult.ts:38](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L38)
+Defined in: [src/result/result/asyncResult.ts:38](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L38)
 
 #### Type Parameters
 
@@ -158,7 +158,7 @@ Defined in: [src/result/result/asyncResult.ts:38](https://github.com/xkatianx/al
 
 > **mapErr**\<`E2`\>(`fn`): `AsyncResult`\<`T`, `E2`\>
 
-Defined in: [src/result/result/asyncResult.ts:42](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L42)
+Defined in: [src/result/result/asyncResult.ts:42](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L42)
 
 #### Type Parameters
 
@@ -182,7 +182,7 @@ Defined in: [src/result/result/asyncResult.ts:42](https://github.com/xkatianx/al
 
 > **or**\<`R2`\>(`res`): `AsyncResult`\<`T` \| [`OkContent`](../type-aliases/OkContent.md)\<`R2`\>, [`ErrContent`](../type-aliases/ErrContent.md)\<`R2`\>\>
 
-Defined in: [src/result/result/asyncResult.ts:58](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L58)
+Defined in: [src/result/result/asyncResult.ts:58](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L58)
 
 #### Type Parameters
 
@@ -206,7 +206,7 @@ Defined in: [src/result/result/asyncResult.ts:58](https://github.com/xkatianx/al
 
 > **orElse**\<`R2`\>(`fn`): `AsyncResult`\<`T` \| [`OkContent`](../type-aliases/OkContent.md)\<`R2`\>, [`ErrContent`](../type-aliases/ErrContent.md)\<`R2`\>\>
 
-Defined in: [src/result/result/asyncResult.ts:64](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L64)
+Defined in: [src/result/result/asyncResult.ts:64](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L64)
 
 #### Type Parameters
 
@@ -230,7 +230,7 @@ Defined in: [src/result/result/asyncResult.ts:64](https://github.com/xkatianx/al
 
 > **then**\<`TResult1`, `TResult2`\>(`onfulfilled?`, `onrejected?`): `Promise`\<`TResult1` \| `TResult2`\>
 
-Defined in: [src/result/result/asyncResult.ts:71](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L71)
+Defined in: [src/result/result/asyncResult.ts:71](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L71)
 
 #### Type Parameters
 
@@ -262,7 +262,7 @@ Defined in: [src/result/result/asyncResult.ts:71](https://github.com/xkatianx/al
 
 > `protected` **transform**\<`R`\>(`fn`): `AsyncResult`\<[`OkContent`](../type-aliases/OkContent.md)\<`R`\>, [`ErrContent`](../type-aliases/ErrContent.md)\<`R`\>\>
 
-Defined in: [src/result/result/asyncResult.ts:32](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L32)
+Defined in: [src/result/result/asyncResult.ts:32](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L32)
 
 #### Type Parameters
 
@@ -286,7 +286,7 @@ Defined in: [src/result/result/asyncResult.ts:32](https://github.com/xkatianx/al
 
 > `static` **all**\<`T`\>(`results`): `AsyncResult`\<[`AsyncResultOkTypes`](../type-aliases/AsyncResultOkTypes.md)\<`T`\>, [`AsyncResultErrTypes`](../type-aliases/AsyncResultErrTypes.md)\<`T`\>\[`number`\]\>
 
-Defined in: [src/result/result/asyncResult.ts:146](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L146)
+Defined in: [src/result/result/asyncResult.ts:146](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L146)
 
 AsyncResult version of `Promise.all` with **fail-fast** semantics.
 
@@ -334,7 +334,7 @@ expect(result.unwrapErr()).toBe('boom') // resolves ~immediately
 
 > `static` **from**\<`R`\>(`input`): `AsyncResult`\<[`OkContent`](../type-aliases/OkContent.md)\<`R`\>, [`ErrContent`](../type-aliases/ErrContent.md)\<`R`\>\>
 
-Defined in: [src/result/result/asyncResult.ts:22](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L22)
+Defined in: [src/result/result/asyncResult.ts:22](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L22)
 
 Create an AsyncResult from a Result, a PromiseLike, or a function returning a Result or a PromiseLike.
 Does not throw synchronously; rejections from the input promise propagate through the returned thenable.
@@ -365,7 +365,7 @@ An AsyncResult.
 
 > `static` **merge**\<`T`\>(`results`): `AsyncResult`\<[`ResultOkTypes`](../type-aliases/ResultOkTypes.md)\<\{ -readonly \[P in string \| number \| symbol\]: Awaited\<T\[P\]\> \}\>, [`ResultErrTypes`](../type-aliases/ResultErrTypes.md)\<\{ -readonly \[P in string \| number \| symbol\]: Awaited\<T\[P\]\> \}\>\[`number`\]\>
 
-Defined in: [src/result/result/asyncResult.ts:120](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/asyncResult.ts#L120)
+Defined in: [src/result/result/asyncResult.ts:120](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/asyncResult.ts#L120)
 
 Waits for **every** input to settle as a `Result`, then returns the first
 `Err` by **array order** (or `Ok([...])` if none errored).

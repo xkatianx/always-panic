@@ -1,4 +1,4 @@
-**always-panic v0.8.1**
+**always-panic v0.8.2**
 
 ***
 

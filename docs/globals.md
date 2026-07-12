@@ -1,8 +1,8 @@
-[**always-panic v0.8.1**](README.md)
+[**always-panic v0.8.2**](README.md)
 
 ***
 
-# always-panic v0.8.1
+# always-panic v0.8.2
 
 ## Enumerations
 

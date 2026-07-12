@@ -1,4 +1,4 @@
-[**always-panic v0.8.1**](../README.md)
+[**always-panic v0.8.2**](../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **result**: `object`
 
-Defined in: [src/result/result/util.ts:64](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/util.ts#L64)
+Defined in: [src/result/result/util.ts:64](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/util.ts#L64)
 
 ## Type Declaration
 

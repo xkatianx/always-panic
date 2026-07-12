@@ -1,4 +1,4 @@
-[**always-panic v0.8.1**](../README.md)
+[**always-panic v0.8.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ResultBase\<T, E\>
 
-Defined in: [src/result/result/type.ts:67](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L67)
+Defined in: [src/result/result/type.ts:67](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L67)
 
 Method contract shared by [Ok](../classes/Ok.md) and [Err](../classes/Err.md), aligned with Rust
 [`std::result::Result`](https://doc.rust-lang.org/std/result/enum.Result.html).
@@ -39,7 +39,7 @@ Error (Err) payload type.
 
 > **and**\<`R`\>(`res`): `ResultBase`\<`T`, `E`\> \| `R`
 
-Defined in: [src/result/result/type.ts:184](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L184)
+Defined in: [src/result/result/type.ts:184](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L184)
 
 Returns `res` if this result is `Ok`, otherwise returns this `Err`.
 
@@ -76,7 +76,7 @@ Second result to return when this result is `Ok`.
 
 > **andThen**\<`R`\>(`fn`): `ResultBase`\<`T`, `E`\> \| `R`
 
-Defined in: [src/result/result/type.ts:195](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L195)
+Defined in: [src/result/result/type.ts:195](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L195)
 
 Calls `fn` if this result is `Ok`, otherwise returns this `Err`.
 
@@ -112,7 +112,7 @@ The `Result` from `fn`, or `this` on `Err`.
 
 > **expect**(`message`): `T`
 
-Defined in: [src/result/result/type.ts:94](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L94)
+Defined in: [src/result/result/type.ts:94](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L94)
 
 Returns the contained `Ok` value.
 
@@ -148,7 +148,7 @@ When the result is `Err`.
 
 > **inspect**(`fn`): `this`
 
-Defined in: [src/result/result/type.ts:230](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L230)
+Defined in: [src/result/result/type.ts:230](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L230)
 
 Calls `fn` with the contained `Ok` value, then returns `this` unchanged.
 
@@ -178,7 +178,7 @@ Side effect for the success value; not called on `Err`.
 
 > **inspectErr**(`fn`): `this`
 
-Defined in: [src/result/result/type.ts:239](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L239)
+Defined in: [src/result/result/type.ts:239](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L239)
 
 Calls `fn` with the contained `Err` value, then returns `this` unchanged.
 
@@ -206,7 +206,7 @@ Side effect for the error value; not called on `Ok`.
 
 > **isErr**(): `boolean`
 
-Defined in: [src/result/result/type.ts:80](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L80)
+Defined in: [src/result/result/type.ts:80](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L80)
 
 Returns `true` if the result is `Err`.
 
@@ -224,7 +224,7 @@ Returns `true` if the result is `Err`.
 
 > **isOk**(): `boolean`
 
-Defined in: [src/result/result/type.ts:73](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L73)
+Defined in: [src/result/result/type.ts:73](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L73)
 
 Returns `true` if the result is `Ok`.
 
@@ -242,7 +242,7 @@ Returns `true` if the result is `Ok`.
 
 > **map**\<`T2`\>(`fn`): [`Result`](../type-aliases/Result.md)\<`T2`, `E`\>
 
-Defined in: [src/result/result/type.ts:140](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L140)
+Defined in: [src/result/result/type.ts:140](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L140)
 
 Maps `Result<T, E>` to `Result<U, E>` by applying `fn` to the contained `Ok`
 value, leaving an `Err` untouched.
@@ -277,7 +277,7 @@ A new `Result` with the mapped `Ok` value, or the original `Err`.
 
 > **mapErr**\<`E2`\>(`fn`): [`Result`](../type-aliases/Result.md)\<`T`, `E2`\>
 
-Defined in: [src/result/result/type.ts:150](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L150)
+Defined in: [src/result/result/type.ts:150](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L150)
 
 Maps `Result<T, E>` to `Result<T, F>` by applying `fn` to the contained `Err`
 value, leaving an `Ok` untouched.
@@ -312,7 +312,7 @@ A new `Result` with the mapped `Err` value, or the original `Ok`.
 
 > **mapOr**\<`T2`\>(`defaultValue`, `fn`): `T2`
 
-Defined in: [src/result/result/type.ts:162](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L162)
+Defined in: [src/result/result/type.ts:162](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L162)
 
 Returns `defaultValue` if `Err`, or applies `fn` to the contained `Ok` value.
 
@@ -353,7 +353,7 @@ Applied to the success value when this result is `Ok`.
 
 > **mapOrElse**\<`T2`\>(`onErr`, `onOk`): `T2`
 
-Defined in: [src/result/result/type.ts:172](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L172)
+Defined in: [src/result/result/type.ts:172](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L172)
 
 Maps a `Result` to `U` by applying `onErr` to a contained `Err` value, or `onOk`
 to a contained `Ok` value.
@@ -392,7 +392,7 @@ Called with the success value when this result is `Ok`.
 
 > **or**\<`R`\>(`res`): `ResultBase`\<`T`, `E`\> \| `R`
 
-Defined in: [src/result/result/type.ts:208](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L208)
+Defined in: [src/result/result/type.ts:208](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L208)
 
 Returns `res` if this result is `Err`, otherwise returns this `Ok`.
 
@@ -428,7 +428,7 @@ Alternate result when this result is `Err`.
 
 > **orElse**\<`R`\>(`fn`): `ResultBase`\<`T`, `E`\> \| `R`
 
-Defined in: [src/result/result/type.ts:217](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L217)
+Defined in: [src/result/result/type.ts:217](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L217)
 
 Calls `fn` if this result is `Err`, otherwise returns this `Ok`.
 
@@ -462,7 +462,7 @@ The `Result` from `fn`, or `this` on `Ok`.
 
 > **unwrap**(): `T`
 
-Defined in: [src/result/result/type.ts:103](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L103)
+Defined in: [src/result/result/type.ts:103](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L103)
 
 Returns the contained `Ok` value.
 
@@ -486,7 +486,7 @@ When the result is `Err` (message derived from the error).
 
 > **unwrapErr**(): `E`
 
-Defined in: [src/result/result/type.ts:112](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L112)
+Defined in: [src/result/result/type.ts:112](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L112)
 
 Returns the contained `Err` value.
 
@@ -510,7 +510,7 @@ When the result is `Ok`.
 
 > **unwrapOr**\<`T2`\>(`defaultValue`): `T` \| `T2`
 
-Defined in: [src/result/result/type.ts:121](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L121)
+Defined in: [src/result/result/type.ts:121](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L121)
 
 Returns the contained `Ok` value, or `defaultValue` if the result is `Err`.
 
@@ -544,7 +544,7 @@ Value to return when this result is `Err` (evaluated eagerly).
 
 > **unwrapOrElse**\<`T2`\>(`fn`): `T` \| `T2`
 
-Defined in: [src/result/result/type.ts:130](https://github.com/xkatianx/always-panic/blob/79458d64d8e2e3679ec37376589fe154effb79a1/src/result/result/type.ts#L130)
+Defined in: [src/result/result/type.ts:130](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/result/type.ts#L130)
 
 Returns the contained `Ok` value, or computes it from the `Err` value.
 
