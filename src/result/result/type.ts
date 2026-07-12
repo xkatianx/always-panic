@@ -1,13 +1,10 @@
 import type Err from './err.js'
 import type Ok from './ok.js'
 
-/** Built-in instances whose methods are not deep-readonly-wrapped. */
-type DeepReadonlyBuiltin = Date | RegExp | Error
-
 /**
  * Recursive readonly view of `T` for inspect callbacks (compile-time only).
  */
-export type DeepReadonly<T> = T extends DeepReadonlyBuiltin
+export type DeepReadonly<T> = T extends Date | RegExp | Error
   ? T
   : T extends (...args: infer A) => infer R
     ? (...args: A) => R

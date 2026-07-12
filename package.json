@@ -1,7 +1,20 @@
 {
   "name": "always-panic",
-  "version": "0.8.1",
-  "description": "Typed errors for typescript.",
+  "version": "0.8.2",
+  "description": "Typed errors and Rust-style Result types for TypeScript.",
+  "author": "xkatianx",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xkatianx/always-panic.git"
+  },
+  "homepage": "https://xkatianx.github.io/always-panic/",
+  "bugs": {
+    "url": "https://github.com/xkatianx/always-panic/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,25 +28,43 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "bun run build.ts && tsc -p tsconfig.build.json",
+    "docs": "typedoc",
     "format": "biome format --write",
     "lint": "biome lint --write",
     "check": "biome check",
     "check:write": "biome check --write",
     "test": "bun test",
+    "typecheck": "tsc --noEmit",
     "verify:build": "bun run build && git diff --exit-code -- dist",
+    "prepublishOnly": "bun run build",
     "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
     "@types/bun": "latest",
     "husky": "^9.1.7",
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "5.9.3"
   },
   "license": "MIT",
   "keywords": [
     "typescript",
+    "result",
+    "error-handling",
+    "typed-errors",
+    "rust",
+    "ok",
+    "err",
+    "async",
+    "esm",
+    "discriminated-union",
     "bun"
   ]
 }
