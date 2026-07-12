@@ -271,11 +271,15 @@ bun run build
 
 Releases publish automatically when a `v*` tag is pushed (the [Tag release on main](.github/workflows/tag-on-main.yml) workflow creates `v${version}` after merges to `main`).
 
-One-time npm setup for [trusted publishing](https://docs.npmjs.com/trusted-publishers/):
+[Trusted publishing](https://docs.npmjs.com/trusted-publishers/) is configured **per package** at  
+`https://www.npmjs.com/package/always-panic/access` — that page only exists after the package is on npm.
 
-1. On [npmjs.com](https://www.npmjs.com/), add a GitHub Actions trusted publisher for this repo.
-2. Set **Workflow filename** to `publish.yml` (exact match).
-3. For the first publish of a new package name, create a pending trusted publisher on your npm account with the same repo/workflow, or run `npm publish` once locally after `npm login`.
+1. First publish once locally: `npm login` → `bun run build` → `npm publish` (2FA required).
+2. Then open the package **Access** page → **Trusted Publisher** → GitHub Actions:
+   - Organization or user: `xkatianx`
+   - Repository: `always-panic`
+   - Workflow filename: `publish.yml`
+3. Later versions publish from CI on `v*` tags.
 
 ## License
 
