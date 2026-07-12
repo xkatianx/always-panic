@@ -1,3 +1,7 @@
+**always-panic v0.8.1**
+
+***
+
 # always-panic
 
 Typed errors and Rust-style `Result` types for TypeScript.
@@ -269,7 +273,7 @@ bun run build
 
 ## Publishing
 
-Releases publish automatically when a `v*` tag is pushed (the [Tag release on main](.github/workflows/tag-on-main.yml) workflow creates `v${version}` after merges to `main`).
+Releases publish automatically when a `v*` tag is pushed (the [Tag release on main](_media/tag-on-main.yml) workflow creates `v${version}` after merges to `main`).
 
 One-time npm setup for [trusted publishing](https://docs.npmjs.com/trusted-publishers/):
 
@@ -279,4 +283,4 @@ One-time npm setup for [trusted publishing](https://docs.npmjs.com/trusted-publi
 
 ## License
 
-[MIT](LICENSE)
+[MIT](_media/LICENSE)

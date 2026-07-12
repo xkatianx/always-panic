@@ -1,0 +1,10 @@
+{
+  "$schema": "https://typedoc.org",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "name": "always-panic",
+  "includeVersion": true,
+  "readme": "README.md",
+  "excludeInternal": true,
+  "plugin": ["typedoc-plugin-markdown"]
+}

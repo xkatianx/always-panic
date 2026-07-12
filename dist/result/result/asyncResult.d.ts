@@ -4,9 +4,9 @@ declare class AsyncResult<T, E> {
     constructor(promise: Promise<Result<T, E>>);
     /**
      * Create an AsyncResult from a Result, a PromiseLike, or a function returning a Result or a PromiseLike.
+     * Does not throw synchronously; rejections from the input promise propagate through the returned thenable.
      * @param input - A Result, a PromiseLike, or a function returning a Result or a PromiseLike.
      * @returns An AsyncResult.
-     * @throws inherits
      */
     static from<R extends Result<OkContent<R>, ErrContent<R>>>(input: R | PromiseLike<R> | (() => R | PromiseLike<R>)): AsyncResult<OkContent<R>, ErrContent<R>>;
     protected transform<R extends Result<OkContent<R>, ErrContent<R>>>(fn: (r: Result<T, E>) => Promise<R>): AsyncResult<OkContent<R>, ErrContent<R>>;
@@ -20,11 +20,14 @@ declare class AsyncResult<T, E> {
     inspect(fn: (value: DeepReadonly<T>) => void | Promise<void>): AsyncResult<T, E>;
     inspectErr(fn: (error: DeepReadonly<E>) => void | Promise<void>): AsyncResult<T, E>;
     /**
-     * AsyncResult version of `Promise.all`, but without early rejection.
-     * Waits for **every** input to settle, then returns the first `Err` by
-     * **array order** (or `Ok([...])` if none errored).
+     * Waits for **every** input to settle as a `Result`, then returns the first
+     * `Err` by **array order** (or `Ok([...])` if none errored).
      *
-     * @see {@link AsyncResult.all} for fail-fast semantics matching `Promise.all`.
+     * Unlike {@link AsyncResult.all}, an early `Err` does not short-circuit the
+     * wait. Underlying promise **rejections** still reject via `Promise.all`
+     * (rejections are not converted to `Err` values).
+     *
+     * @see {@link AsyncResult.all} for fail-fast-on-`Err` semantics.
      * @param results - An array of AsyncResults to merge.
      * @returns An AsyncResult that is either an array of all Ok values
      * or the first Err value (by array order).
