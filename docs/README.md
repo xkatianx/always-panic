@@ -1,4 +1,4 @@
-**always-panic v0.8.2**
+**always-panic v0.8.3**
 
 ***
 
@@ -135,6 +135,18 @@ Use `result.all([...])` to combine multiple sync `Result`s. It short-circuits on
 
 Use `result.panic(res)` before returning from public APIs: if `res` is still `Err(UnexpectedError)`, it **throws** via `unwrap()` (with a traceable `cause` chain); otherwise it returns `res` with `UnexpectedError` removed from the error union.
 
+`panic` accepts a `Result` or a `PromiseLike<Result>` (including an `AsyncResult`) and stays in that world — sync in, sync out; async in, `AsyncResult` out. In the async case the panic surfaces as a **rejection** rather than a synchronous throw:
+
+```ts
+// sync — throws here
+const r = result.panic(MathError.try(() => ok(divide(a, b))))
+
+// async — rejects on await, still chainable
+const r = await result.panic(MathError.try(async () => ok(await fetchUser('1'))))
+```
+
+`result.panicSync` / `result.panicAsync` are the explicit variants, mirroring `trySync` / `tryAsync`; prefer `panic` unless you need to pin the overload.
+
 ### `AsyncResult<T, E>`
 
 Thenable wrapper around `Promise<Result<T, E>>`. `await asyncResult` yields a `Result`. Chain with `map`, `andThen`, and the other combinators; callbacks may return sync or async values.
@@ -258,7 +270,9 @@ result.err
 result.asIs   // widen merged Result unions for type assertions
 result.all    // sync Result.all
 result.isResult
-result.panic  // unwrap remaining UnexpectedError before export
+result.panic       // unwrap remaining UnexpectedError before export (sync or async)
+result.panicSync   // the sync part of panic
+result.panicAsync  // the async part of panic
 ```
 
 ## Development
@@ -275,11 +289,15 @@ bun run build
 
 Releases publish automatically when a `v*` tag is pushed (the [Tag release on main](_media/tag-on-main.yml) workflow creates `v${version}` after merges to `main`).
 
-One-time npm setup for [trusted publishing](https://docs.npmjs.com/trusted-publishers/):
+[Trusted publishing](https://docs.npmjs.com/trusted-publishers/) is configured **per package** at  
+`https://www.npmjs.com/package/always-panic/access` — that page only exists after the package is on npm.
 
-1. On [npmjs.com](https://www.npmjs.com/), add a GitHub Actions trusted publisher for this repo.
-2. Set **Workflow filename** to `publish.yml` (exact match).
-3. For the first publish of a new package name, create a pending trusted publisher on your npm account with the same repo/workflow, or run `npm publish` once locally after `npm login`.
+1. First publish once locally: `npm login` → `bun run build` → `npm publish` (2FA required).
+2. Then open the package **Access** page → **Trusted Publisher** → GitHub Actions:
+   - Organization or user: `xkatianx`
+   - Repository: `always-panic`
+   - Workflow filename: `publish.yml`
+3. Later versions publish from CI on `v*` tags.
 
 ## License
 

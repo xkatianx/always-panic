@@ -1,4 +1,4 @@
-[**always-panic v0.8.2**](../README.md)
+[**always-panic v0.8.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Enumeration: UnexpectedErrorCode
 
-Defined in: [src/error/error.ts:3](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/error.ts#L3)
+Defined in: [src/error/error.ts:3](https://github.com/xkatianx/always-panic/blob/76703c0987dff44a1a82536ea874cdfe24a2610a/src/error/error.ts#L3)
 
 ## Enumeration Members
 
@@ -14,7 +14,7 @@ Defined in: [src/error/error.ts:3](https://github.com/xkatianx/always-panic/blob
 
 > **UNKNOWN**: `0`
 
-Defined in: [src/error/error.ts:5](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/error.ts#L5)
+Defined in: [src/error/error.ts:5](https://github.com/xkatianx/always-panic/blob/76703c0987dff44a1a82536ea874cdfe24a2610a/src/error/error.ts#L5)
 
 Foreign or unknown failure — promote to a `TypedError` when recognized.
 
@@ -24,6 +24,6 @@ Foreign or unknown failure — promote to a `TypedError` when recognized.
 
 > **UNREACHABLE**: `1`
 
-Defined in: [src/error/error.ts:7](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/error/error.ts#L7)
+Defined in: [src/error/error.ts:7](https://github.com/xkatianx/always-panic/blob/76703c0987dff44a1a82536ea874cdfe24a2610a/src/error/error.ts#L7)
 
 Branch that should never run (bug in caller or logic).

@@ -1,4 +1,4 @@
-[**always-panic v0.8.2**](../README.md)
+[**always-panic v0.8.3**](../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > `const` **err**: \<`E`\>(`error`) => [`Result`](../type-aliases/Result.md)\<`never`, `E`\> = `result.err`
 
-Defined in: [src/result/index.ts:9](https://github.com/xkatianx/always-panic/blob/881c1b407a45e008f3a06d46eb9029aee629ce8e/src/result/index.ts#L9)
+Defined in: [src/result/index.ts:9](https://github.com/xkatianx/always-panic/blob/76703c0987dff44a1a82536ea874cdfe24a2610a/src/result/index.ts#L9)
 
 ## Type Parameters
 
