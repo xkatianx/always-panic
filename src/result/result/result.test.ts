@@ -1,6 +1,7 @@
 import { describe, expect, expectTypeOf, it, mock } from 'bun:test'
 import { UnexpectedError, UnexpectedErrorCode } from '../../error/index.js'
 import { type DeepReadonly, err, ok, type Result } from '../index.js'
+import AsyncResult from './asyncResult.js'
 import Err from './err.js'
 import Ok from './ok.js'
 import util from './util.js'
@@ -945,6 +946,82 @@ describe('utils', () => {
         T4 | UnexpectedError<UnexpectedErrorCode>
       >
       expectTypeOf(util.panic(result)).toEqualTypeOf<Result<T1, T4>>()
+    })
+
+    it('should dispatch to panicSync for a Result', () => {
+      expect(util.panic(ok(t3))).toBeInstanceOf(Ok)
+      expect(util.panicSync(ok(t3))).toBeInstanceOf(Ok)
+    })
+  })
+
+  describe('panicAsync', () => {
+    const unexpected = new UnexpectedError(
+      UnexpectedErrorCode.UNKNOWN,
+      'unexpected',
+    )
+
+    it('should return Ok unchanged for an AsyncResult', async () => {
+      const result = await util.panic(AsyncResult.from(ok(t3)))
+      expect(result.isOk()).toBe(true)
+      expect(result.unwrap()).toEqual(t3)
+    })
+
+    it('should return Ok unchanged for a Promise<Result>', async () => {
+      const result = await util.panic(Promise.resolve(ok(t3)))
+      expect(result.isOk()).toBe(true)
+      expect(result.unwrap()).toEqual(t3)
+    })
+
+    it('should return Err unchanged for non-UnexpectedError', async () => {
+      const result = await util.panic(AsyncResult.from(err(t4)))
+      expect(result.isErr()).toBe(true)
+      expect(result.unwrapErr()).toEqual(t4)
+    })
+
+    it('should reject with UnexpectedError instead of throwing', async () => {
+      const input = AsyncResult.from(
+        err(unexpected) as Result<T1, UnexpectedError<UnexpectedErrorCode>>,
+      )
+      // The panic surfaces as a rejection; calling panic must not throw here.
+      const panicked = util.panic(input)
+      expect(Promise.resolve(panicked)).rejects.toThrow()
+    })
+
+    it('should attach UnexpectedError as cause of the rejection', async () => {
+      const input = AsyncResult.from(
+        err(unexpected) as Result<T1, UnexpectedError<UnexpectedErrorCode>>,
+      )
+      const error = await Promise.resolve(util.panic(input)).catch((e) => e)
+      expect(error).toBeInstanceOf(Error)
+      expect(error.cause).toBe(unexpected)
+    })
+
+    it('should propagate an underlying rejection', async () => {
+      const boom = new Error('boom')
+      const input = Promise.reject(boom) as Promise<Result<T1, T4>>
+      expect(Promise.resolve(util.panic(input))).rejects.toThrow(boom)
+    })
+
+    it('should return an AsyncResult, not a Promise', () => {
+      expect(util.panic(AsyncResult.from(ok(t3)))).toBeInstanceOf(AsyncResult)
+      expect(util.panicAsync(AsyncResult.from(ok(t3)))).toBeInstanceOf(
+        AsyncResult,
+      )
+    })
+
+    it('should exclude UnexpectedError from the Err union', () => {
+      const input = AsyncResult.from(
+        err(t4) as Result<T1, T4 | UnexpectedError<UnexpectedErrorCode>>,
+      )
+      expectTypeOf(util.panic(input)).toEqualTypeOf<AsyncResult<T1, T4>>()
+      expectTypeOf(util.panicAsync(input)).toEqualTypeOf<AsyncResult<T1, T4>>()
+    })
+
+    it('should stay chainable after panicking', async () => {
+      const result = await util
+        .panic(AsyncResult.from(ok(t3)))
+        .map((v) => v.T3 + 1)
+      expect(result.unwrap()).toBe(4)
     })
   })
 })

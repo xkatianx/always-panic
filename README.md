@@ -131,6 +131,18 @@ Use `result.all([...])` to combine multiple sync `Result`s. It short-circuits on
 
 Use `result.panic(res)` before returning from public APIs: if `res` is still `Err(UnexpectedError)`, it **throws** via `unwrap()` (with a traceable `cause` chain); otherwise it returns `res` with `UnexpectedError` removed from the error union.
 
+`panic` accepts a `Result` or a `PromiseLike<Result>` (including an `AsyncResult`) and stays in that world — sync in, sync out; async in, `AsyncResult` out. In the async case the panic surfaces as a **rejection** rather than a synchronous throw:
+
+```ts
+// sync — throws here
+const r = result.panic(MathError.try(() => ok(divide(a, b))))
+
+// async — rejects on await, still chainable
+const r = await result.panic(MathError.try(async () => ok(await fetchUser('1'))))
+```
+
+`result.panicSync` / `result.panicAsync` are the explicit variants, mirroring `trySync` / `tryAsync`; prefer `panic` unless you need to pin the overload.
+
 ### `AsyncResult<T, E>`
 
 Thenable wrapper around `Promise<Result<T, E>>`. `await asyncResult` yields a `Result`. Chain with `map`, `andThen`, and the other combinators; callbacks may return sync or async values.
@@ -254,7 +266,9 @@ result.err
 result.asIs   // widen merged Result unions for type assertions
 result.all    // sync Result.all
 result.isResult
-result.panic  // unwrap remaining UnexpectedError before export
+result.panic       // unwrap remaining UnexpectedError before export (sync or async)
+result.panicSync   // the sync part of panic
+result.panicAsync  // the async part of panic
 ```
 
 ## Development
