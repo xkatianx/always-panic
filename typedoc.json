@@ -1,10 +1,9 @@
 {
   "$schema": "https://typedoc.org",
   "entryPoints": ["src/index.ts"],
-  "out": "docs",
+  "out": "site",
   "name": "always-panic",
   "includeVersion": true,
   "readme": "README.md",
-  "excludeInternal": true,
-  "plugin": ["typedoc-plugin-markdown"]
+  "excludeInternal": true
 }
