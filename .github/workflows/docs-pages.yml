@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Generate docs
+      - name: Generate docs site
         run: bun run docs
 
       - name: Setup Pages
@@ -42,7 +42,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: docs
+          path: site
 
       - name: Deploy to GitHub Pages
         id: deployment

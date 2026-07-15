@@ -1,3 +1,7 @@
 node_modules
 .cursor
 AGENTS.md
+
+# Generated HTML API docs (`bun run docs`); deployed to GitHub Pages by
+# docs-pages.yml, which rebuilds them in CI. Never committed.
+site
