@@ -1,20 +1,72 @@
 name: Publish to npm
 
+# Publishes on every merge to main. package.json's version is the single source
+# of truth: pr-to-main.yml requires each PR to bump it, so every merge releases
+# exactly once.
+#
+# Tagging and publishing live in the SAME workflow on purpose. A tag pushed with
+# the default GITHUB_TOKEN does not trigger other workflows (GitHub blocks that
+# to prevent recursive runs), so a separate `on: push: tags` publisher would
+# never fire.
+
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: publish-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
-  publish:
+  check:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      publish: ${{ steps.resolve.outputs.publish }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Resolve release tag from package.json
+        id: resolve
+        run: |
+          TAG="v$(jq -r .version package.json)"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          # Capture separately rather than piping into grep: the default shell is
+          # `bash -e` without pipefail, so a piped ls-remote failure (network,
+          # auth) would be indistinguishable from "tag does not exist" and would
+          # wrongly green-light a publish.
+          if ! EXISTING=$(git ls-remote --tags origin "refs/tags/${TAG}"); then
+            echo "::error::Could not query remote tags; refusing to guess whether ${TAG} is released."
+            exit 1
+          fi
+
+          if [ -n "${EXISTING}" ]; then
+            echo "::notice::${TAG} is already released; nothing to publish."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Releasing ${TAG}."
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: check
+    if: needs.check.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the release tag
+      id-token: write # npm OIDC trusted publishing
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -45,16 +97,18 @@ jobs:
       - name: Test
         run: bun test
 
-      - name: Verify tag matches package.json version
-        run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          VERSION=$(jq -r .version package.json)
-          if [ "$TAG" != "$VERSION" ]; then
-            echo "::error::Tag v${TAG} does not match package.json version ${VERSION}."
-            exit 1
-          fi
-
+      # `npm publish` runs prepublishOnly (bun run build), which regenerates dist.
       - name: Publish to npm
         run: npm publish
         env:
           HUSKY: '0'
+
+      # Tag only after npm accepts the publish, so a v* tag always means "this
+      # version is on npm" rather than "we tried to release it".
+      - name: Tag the release
+        run: |
+          TAG="${{ needs.check.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          git push origin "refs/tags/${TAG}"
