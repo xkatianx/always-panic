@@ -848,6 +848,13 @@ describe('utils', () => {
       expect(result.unwrap()).toBe(t1)
       expectTypeOf(result).toEqualTypeOf<Result<T1, never>>()
     })
+
+    it('should create an Ok(undefined) with type Result<void, never> when called with no argument', () => {
+      const result = ok()
+      expect(result.isOk()).toBe(true)
+      expect(result.unwrap()).toBeUndefined()
+      expectTypeOf(result).toEqualTypeOf<Result<void, never>>()
+    })
   })
 
   describe('err', () => {

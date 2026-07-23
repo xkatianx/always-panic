@@ -98,7 +98,8 @@ import { result } from 'always-panic'
 ```
 
 - **`result.ok(value)` / `result.err(error)`** — also exported top-level as
-  `ok` / `err`.
+  `ok` / `err`. `ok()` with no argument is `Ok(undefined)`, typed
+  `Result<void, never>` — the success case of a `Result<void, E>`.
 - **`result.all([...])`** — combine sync `Result`s into
   `Result<[values], E>`; short-circuits on the first `Err` by array order.
 - **`result.isResult(value)`** — runtime guard: `value instanceof Ok | Err`.

@@ -11,8 +11,14 @@ import type {
   ResultOkTypes,
 } from './type.js'
 
-function ok<T>(value: T): Result<T, never> {
-  return new Ok(value)
+/**
+ * Wrap a value in `Ok`. Called with no argument, produces `Ok(undefined)` —
+ * the success case of a `Result<void, E>`.
+ */
+function ok(): Result<void, never>
+function ok<T>(value: T): Result<T, never>
+function ok<T>(value?: T): Result<T, never> {
+  return new Ok(value as T)
 }
 
 function err<E>(error: E): Result<never, E> {

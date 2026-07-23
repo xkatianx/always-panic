@@ -33,7 +33,7 @@ Panics (or throws from `unwrap`) belong at boundaries where failure was never a 
 
 `Result<T, E>` is either `Ok<T>` or `Err<E>`. Public APIs should constrain `E` to your domain `TypedError` subclasses — the errors callers are meant to handle.
 
-- Create values with `ok(value)` and `err(error)`.
+- Create values with `ok(value)` and `err(error)`; `ok()` with no argument is `Ok(undefined)`, the success case of a `Result<void, E>`.
 - Narrow with `isOk()` / `isErr()`, or chain with `map`, `andThen`, `orElse`, and the rest of the Rust-aligned combinators.
 - Combine sync results with `result.all`, which short-circuits on the first `Err` by array order.
 - Chain many fallible steps with `result.gen`, where `yield*` is the equivalent of Rust's `?` operator: it evaluates to the `Ok` value or short-circuits the body with the first `Err`. Sync generator in, `Result` out; async generator in, `AsyncResult` out (and `yield*` accepts `AsyncResult`s directly).
