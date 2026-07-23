@@ -5,5 +5,6 @@
   "name": "always-panic",
   "includeVersion": true,
   "readme": "README.md",
+  "projectDocuments": ["src/result/README.md", "CORE_CONCEPTS.md"],
   "excludeInternal": true
 }

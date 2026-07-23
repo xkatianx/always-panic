@@ -16,6 +16,8 @@ API reference: [https://xkatianx.github.io/always-panic/](https://xkatianx.githu
 
 Design rationale (expected vs unexpected errors, `.try()`, always-panic): [CORE_CONCEPTS.md](https://github.com/xkatianx/always-panic/blob/main/CORE_CONCEPTS.md)
 
+Standalone `Result` / `AsyncResult` guide (no typed errors required): [src/result/README.md](https://github.com/xkatianx/always-panic/blob/main/src/result/README.md)
+
 ## Quick start
 
 ```ts
@@ -94,40 +96,20 @@ class ParseError extends TypedError<ParseErrorCode> {
 
 See [CORE_CONCEPTS.md](https://github.com/xkatianx/always-panic/blob/main/CORE_CONCEPTS.md) for the full expected vs unexpected model and why only `UnexpectedError` attaches `cause` on unwrap.
 
-### `Result<T, E>`
+### `Result<T, E>` and `AsyncResult<T, E>`
 
-A discriminated union of `Ok<T>` and `Err<E>`, modeled after [Rust's `Result`](https://doc.rust-lang.org/std/result/enum.Result.html).
+A discriminated union of `Ok<T>` and `Err<E>`, modeled after [Rust's `Result`](https://doc.rust-lang.org/std/result/enum.Result.html), plus `AsyncResult` — a thenable wrapper around `Promise<Result>` with the same combinators.
 
-Create values with `ok(value)` and `err(error)`:
+The `Result` half stands alone: `E` can be any type, and nothing in it requires `TypedError`. See the **[Result README](src/result/README.md)** for the full guide — creating values, the method table, the `result` namespace utilities, and `AsyncResult.all` / `AsyncResult.merge`.
 
 ```ts
-import { ok, err } from 'always-panic'
+import { ok, err, type Result } from 'always-panic'
 
 const success = ok(42)
 const failure = err(new ParseError(ParseErrorCode.EMPTY_INPUT, 'nope'))
 ```
 
-Common methods:
-
-| Method | Ok | Err |
-| --- | --- | --- |
-| `isOk()` / `isErr()` | type guard | type guard |
-| `expect(msg)` | returns value | throws `Error` with `msg` |
-| `unwrap()` | returns value | throws `Error` |
-| `unwrapErr()` | throws | returns error |
-| `unwrapOr(default)` | returns value | returns default |
-| `unwrapOrElse(fn)` | returns value | calls `fn(error)` |
-| `map(fn)` / `mapErr(fn)` | maps value / unchanged | unchanged / maps error |
-| `mapOr` / `mapOrElse` | compute from value | return default or call `fn(error)` |
-| `and` / `andThen(fn)` | pass through / chain `Result` | unchanged |
-| `or` / `orElse(fn)` | unchanged | pass through / fallback `Result` |
-| `inspect(fn)` / `inspectErr(fn)` | side effect on value / unchanged | unchanged / side effect on error |
-
-On `Err`, `unwrap()` and `expect()` attach the inner error as `Error.cause` when it is a `UnexpectedError` (or any error with `causeForUnwrap: true`).
-
-`inspect` / `inspectErr` callbacks receive `DeepReadonly<T>` — a compile-time readonly view; nothing is frozen at runtime.
-
-Use `result.all([...])` to combine multiple sync `Result`s. It short-circuits on the first `Err`.
+### `result.panic`
 
 Use `result.panic(res)` before returning from public APIs: if `res` is still `Err(UnexpectedError)`, it **throws** via `unwrap()` (with a traceable `cause` chain); otherwise it returns `res` with `UnexpectedError` removed from the error union.
 
@@ -142,39 +124,6 @@ const r = await result.panic(MathError.try(async () => ok(await fetchUser('1')))
 ```
 
 `result.panicSync` / `result.panicAsync` are the explicit variants, mirroring `trySync` / `tryAsync`; prefer `panic` unless you need to pin the overload.
-
-### `AsyncResult<T, E>`
-
-Thenable wrapper around `Promise<Result<T, E>>`. `await asyncResult` yields a `Result`. Chain with `map`, `andThen`, and the other combinators; callbacks may return sync or async values.
-
-```ts
-import { AsyncResult, ok } from 'always-panic'
-
-const ar = AsyncResult.from(async () => ok(await fetchUser('1')))
-
-const mapped = await ar.map((user) => user.name)
-const name = mapped.unwrapOr('anonymous')
-```
-
-Construct from a `Result`, a `PromiseLike<Result<...>>`, or a function returning either:
-
-```ts
-AsyncResult.from(ok(1))
-AsyncResult.from(Promise.resolve(ok(1)))
-AsyncResult.from(async () => ok(await load()))
-```
-
-**`AsyncResult.all`** — fail-fast. Returns `Err(e)` as soon as the **first** input settles to `Err` (by completion time, not array index). Unlike `Promise.all`, an `Err` value resolves the outer async result instead of rejecting it; only a rejected underlying promise rejects (and only if that rejection wins the race before an `Err` settles).
-
-**`AsyncResult.merge`** — waits for **every** input to settle as a `Result`, then returns the first `Err` by **array order** (or `Ok([...])` if all succeeded). Underlying promise **rejections** still reject the merge via `Promise.all` (it does not treat rejections as `Err` values).
-
-```ts
-const allOk = await AsyncResult.all([fetchA(), fetchB()])
-const [a, b] = allOk.unwrap()
-
-const merged = await AsyncResult.merge([fetchA(), fetchB()])
-const [c, d] = merged.unwrap()
-```
 
 ### `YourTypedError.try` or `UnexpectedError.try`
 
