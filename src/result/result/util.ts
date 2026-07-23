@@ -93,6 +93,100 @@ function panicAsync<R extends ResultLike<R>>(
   return AsyncResult.from(async () => panicSync(await res))
 }
 
+/**
+ * Early-return over `Result`s — the equivalent of Rust's
+ * [`?` operator](https://doc.rust-lang.org/std/result/index.html#the-question-mark-operator-).
+ *
+ * Runs a generator body in which `yield* res` either evaluates to the `Ok`
+ * value of `res` or short-circuits the whole body with its `Err` (returned
+ * **by reference**, preserving the error's stack). The body must `return` a
+ * `Result`; error types from every `yield*` and from the returned `Result`
+ * accumulate in the resulting error union.
+ *
+ * Accepts a sync or an async generator function and stays in that world:
+ * sync in, `Result` out; async in, `AsyncResult` out. In an async body,
+ * `yield*` works directly on an `AsyncResult` as well as on an awaited
+ * `Result`.
+ *
+ * On early return the generator is closed, so `finally` blocks and
+ * `using` / `await using` disposals in the body still run. Thrown (foreign)
+ * exceptions are not caught — wrap the body with `TypedError.try` semantics
+ * yourself if you need that.
+ *
+ * @param body - A generator function using `yield*` on `Result`s (or
+ *   `AsyncResult`s in the async case).
+ * @returns The body's returned `Result`, or the first yielded `Err`.
+ * @example
+ * // sync
+ * const r = result.gen(function* () {
+ *   const a = yield* parse(input) // Result<number, ParseError>
+ *   const b = yield* validate(a) // Result<number, ValidateError>
+ *   return ok(a + b)
+ * }) // Result<number, ParseError | ValidateError>
+ * // async — yield* awaits AsyncResults directly
+ * const r = await result.gen(async function* () {
+ *   const user = yield* fetchUser(id) // AsyncResult<User, HttpError>
+ *   const posts = yield* fetchPosts(user) // AsyncResult<Post[], HttpError>
+ *   return ok({ user, posts })
+ * })
+ */
+function gen<Y extends Err<unknown>, R extends Result<unknown, unknown>>(
+  body: () => Generator<Y, R>,
+): Result<OkContent<R>, ErrContent<Y> | ErrContent<R>>
+function gen<Y extends Err<unknown>, R extends Result<unknown, unknown>>(
+  body: () => AsyncGenerator<Y, R>,
+): AsyncResult<OkContent<R>, ErrContent<Y> | ErrContent<R>>
+function gen<Y extends Err<unknown>, R extends Result<unknown, unknown>>(
+  body: () => Generator<Y, R> | AsyncGenerator<Y, R>,
+):
+  | Result<OkContent<R>, ErrContent<Y> | ErrContent<R>>
+  | AsyncResult<OkContent<R>, ErrContent<Y> | ErrContent<R>> {
+  const iter = body()
+  return Symbol.asyncIterator in iter ? driveAsync(iter) : driveSync(iter)
+}
+
+/** The sync part of `gen`. Just use `gen` instead. */
+function genSync<Y extends Err<unknown>, R extends Result<unknown, unknown>>(
+  body: () => Generator<Y, R>,
+): Result<OkContent<R>, ErrContent<Y> | ErrContent<R>> {
+  return driveSync(body())
+}
+
+/** The async part of `gen`. Just use `gen` instead. */
+function genAsync<Y extends Err<unknown>, R extends Result<unknown, unknown>>(
+  body: () => AsyncGenerator<Y, R>,
+): AsyncResult<OkContent<R>, ErrContent<Y> | ErrContent<R>> {
+  return driveAsync(body())
+}
+
+function driveSync<Y extends Err<unknown>, R extends Result<unknown, unknown>>(
+  iter: Generator<Y, R>,
+): Result<OkContent<R>, ErrContent<Y> | ErrContent<R>> {
+  const step = iter.next()
+  if (!step.done) {
+    // Close the generator so `finally` blocks and `using` disposals run.
+    iter.return(undefined as never)
+    return step.value as Err<ErrContent<Y>>
+  }
+  return step.value as Result<OkContent<R>, ErrContent<R>>
+}
+
+function driveAsync<Y extends Err<unknown>, R extends Result<unknown, unknown>>(
+  iter: AsyncGenerator<Y, R>,
+): AsyncResult<OkContent<R>, ErrContent<Y> | ErrContent<R>> {
+  return AsyncResult.from(
+    async (): Promise<Result<OkContent<R>, ErrContent<Y> | ErrContent<R>>> => {
+      const step = await iter.next()
+      if (!step.done) {
+        // Close the generator so `finally` blocks and `await using` disposals run.
+        await iter.return(undefined as never)
+        return step.value as Err<ErrContent<Y>>
+      }
+      return step.value as Result<OkContent<R>, ErrContent<R>>
+    },
+  )
+}
+
 export default {
   ok,
   err,
@@ -102,4 +196,7 @@ export default {
   panic,
   panicSync,
   panicAsync,
+  gen,
+  genSync,
+  genAsync,
 }

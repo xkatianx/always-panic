@@ -237,4 +237,16 @@ export interface ResultBase<T, E> {
    * @see {@link https://doc.rust-lang.org/std/result/enum.Result.html#method.inspect_err | Result::inspect_err}
    */
   inspectErr(fn: (error: DeepReadonly<E>) => void): this
+
+  /**
+   * Enables `yield* res` inside a `result.gen` body — the equivalent of Rust's
+   * [`?` operator](https://doc.rust-lang.org/std/result/index.html#the-question-mark-operator-).
+   *
+   * On `Ok`, `yield*` produces no yields and evaluates to the contained value.
+   * On `Err`, it yields the `Err` itself, which the surrounding
+   * `result.gen` / `genSync` / `genAsync` driver returns by reference
+   * (short-circuiting the rest of the body). Not meant to be iterated by
+   * anything other than those drivers.
+   */
+  [Symbol.iterator](): Generator<Err<E>, T>
 }

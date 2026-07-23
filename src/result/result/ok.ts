@@ -79,6 +79,11 @@ class Ok<T> implements ResultBase<T, never> {
   inspectErr(_fn: unknown): this {
     return this
   }
+
+  // biome-ignore lint/correctness/useYield: Ok yields nothing; `yield*` evaluates straight to the value
+  *[Symbol.iterator](): Generator<never, T> {
+    return this.value
+  }
 }
 
 export default Ok

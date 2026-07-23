@@ -100,7 +100,7 @@ See [CORE_CONCEPTS.md](https://github.com/xkatianx/always-panic/blob/main/CORE_C
 
 A discriminated union of `Ok<T>` and `Err<E>`, modeled after [Rust's `Result`](https://doc.rust-lang.org/std/result/enum.Result.html), plus `AsyncResult` — a thenable wrapper around `Promise<Result>` with the same combinators.
 
-The `Result` half stands alone: `E` can be any type, and nothing in it requires `TypedError`. See the **[Result README](src/result/README.md)** for the full guide — creating values, the method table, the `result` namespace utilities, and `AsyncResult.all` / `AsyncResult.merge`.
+The `Result` half stands alone: `E` can be any type, and nothing in it requires `TypedError`. See the **[Result README](src/result/README.md)** for the full guide — creating values, the method table, early return with `result.gen` (Rust's `?` operator), the `result` namespace utilities, and `AsyncResult.all` / `AsyncResult.merge`.
 
 ```ts
 import { ok, err, type Result } from 'always-panic'
@@ -218,6 +218,9 @@ result.isResult
 result.panic       // unwrap remaining UnexpectedError before export (sync or async)
 result.panicSync   // the sync part of panic
 result.panicAsync  // the async part of panic
+result.gen         // early return via yield* — Rust's `?` operator (sync or async)
+result.genSync     // the sync part of gen
+result.genAsync    // the async part of gen
 ```
 
 ## Development

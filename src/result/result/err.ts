@@ -97,6 +97,14 @@ class Err<E> implements ResultBase<never, E> {
     fn(this.error as DeepReadonly<E>)
     return this
   }
+
+  *[Symbol.iterator](): Generator<Err<E>, never> {
+    yield this
+    // `gen` never resumes after a yielded Err; only a foreign driver can get here.
+    throw new Error(
+      'Err resumed after yielding; drive `yield*` with result.gen instead',
+    )
+  }
 }
 
 export default Err

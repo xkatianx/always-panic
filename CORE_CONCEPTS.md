@@ -36,6 +36,7 @@ Panics (or throws from `unwrap`) belong at boundaries where failure was never a 
 - Create values with `ok(value)` and `err(error)`.
 - Narrow with `isOk()` / `isErr()`, or chain with `map`, `andThen`, `orElse`, and the rest of the Rust-aligned combinators.
 - Combine sync results with `result.all`, which short-circuits on the first `Err` by array order.
+- Chain many fallible steps with `result.gen`, where `yield*` is the equivalent of Rust's `?` operator: it evaluates to the `Ok` value or short-circuits the body with the first `Err`. Sync generator in, `Result` out; async generator in, `AsyncResult` out (and `yield*` accepts `AsyncResult`s directly).
 
 `AsyncResult<T, E>` is the same idea for async code: `await` yields a `Result`. `AsyncResult.all` fails fast by completion time (an `Err` resolves the outer result; only a winning promise rejection rejects). `AsyncResult.merge` waits for every input to settle as a `Result`, then returns the first `Err` by array order — but an underlying promise rejection still rejects the merge.
 

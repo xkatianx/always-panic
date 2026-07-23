@@ -59,6 +59,38 @@ On `Err`, `unwrap()` and `expect()` attach the inner error as `Error.cause`
 when it opts in with `causeForUnwrap: true` (the error half's
 `UnexpectedError` is the built-in error that does).
 
+## Early return: `result.gen` (the `?` operator)
+
+`result.gen` runs a generator body in which `yield* res` either evaluates to
+the `Ok` value or short-circuits the whole body with the `Err` — the
+equivalent of Rust's
+[`?` operator](https://doc.rust-lang.org/std/result/index.html#the-question-mark-operator-).
+No more `if (r.isErr()) return r` ladders:
+
+```ts
+import { ok, result } from 'always-panic'
+
+// sync — Result out
+const r = result.gen(function* () {
+  const user = yield* findUser(id) // Result<User, DbError>
+  const posts = yield* findPosts(user) // Result<Post[], DbError | CacheError>
+  return ok({ user, posts })
+}) // Result<{ user: User; posts: Post[] }, DbError | CacheError>
+
+// async — AsyncResult out; yield* works on AsyncResult directly
+const ar = result.gen(async function* () {
+  const user = yield* fetchUser(id) // AsyncResult<User, HttpError>
+  const posts = yield* fetchPosts(user) // AsyncResult<Post[], HttpError>
+  return ok({ user, posts })
+})
+```
+
+- The body must `return` a `Result` (`ok(...)` or `err(...)`). Error types from every `yield*` and from the returned `Result` accumulate in the resulting error union.
+- A yielded `Err` is returned **by reference** — identity and stack preserved, exactly like an early `return r`.
+- On early return the generator is **closed**, so `finally` blocks and `using` / `await using` disposals in the body still run.
+- Thrown (foreign) exceptions are not caught — gathering throws stays the job of the [error half's `.try()`](../../README.md).
+- Sync in, `Result` out; async in, `AsyncResult` out. In an async body `yield*` accepts both `AsyncResult`s and awaited `Result`s; sync `Result`s work in either. Explicit variants: `genSync` / `genAsync`.
+
 ## The `result` namespace
 
 ```ts
@@ -70,6 +102,8 @@ import { result } from 'always-panic'
 - **`result.all([...])`** — combine sync `Result`s into
   `Result<[values], E>`; short-circuits on the first `Err` by array order.
 - **`result.isResult(value)`** — runtime guard: `value instanceof Ok | Err`.
+- **`result.gen(body)`** (and `genSync` / `genAsync`) — early return via
+  `yield*`; see above.
 - **`result.asIs(res)`** — identity helper that widens a merged union like
   `Ok<A> | Err<B> | Err<C>` back to `Result<A, B | C>` for type assertions.
 - **`result.panic(res)`** (and `panicSync` / `panicAsync`) — the one bridge
