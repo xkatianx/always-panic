@@ -203,6 +203,7 @@ export type {
   ErrContent,
   DeepReadonly,
   MaybeResult,
+  MaybeOkContent,
   ResultOkTypes,
   ResultErrTypes,
   AsyncResultOkTypes,
@@ -210,11 +211,12 @@ export type {
 }
 
 // result namespace
-result.ok
+result.ok       // ok() with no argument is Ok(undefined): Result<void, never>
 result.err
-result.asIs   // widen merged Result unions for type assertions
-result.all    // sync Result.all
+result.asIs     // widen merged Result unions for type assertions
+result.all      // sync Result.all
 result.isResult
+result.fromMaybe   // normalize a MaybeResult into a Result
 result.panic       // unwrap remaining UnexpectedError before export (sync or async)
 result.panicSync   // the sync part of panic
 result.panicAsync  // the async part of panic

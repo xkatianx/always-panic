@@ -22,6 +22,13 @@ export type ResultLike<R> = Result<OkContent<R>, ErrContent<R>>
 
 export type MaybeResult<T, E = unknown> = T | Result<T, E>
 
+/**
+ * The `Ok` payload a {@link MaybeResult} normalizes to: the `Ok` content of any
+ * `Result` member, and the value itself for any bare member.
+ */
+export type MaybeOkContent<M> =
+  M extends Result<unknown, unknown> ? OkContent<M> : M
+
 export type ResultOkTypes<T extends Result<unknown, unknown>[]> = {
   [key in keyof T]: T[key] extends Result<unknown, unknown>
     ? OkContent<T[key]>

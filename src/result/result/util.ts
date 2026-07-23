@@ -4,6 +4,7 @@ import Err from './err.js'
 import Ok from './ok.js'
 import type {
   ErrContent,
+  MaybeOkContent,
   OkContent,
   Result,
   ResultErrTypes,
@@ -52,6 +53,23 @@ function all<const T extends Result<unknown, unknown>[]>(
 
 function isResult<T, E>(value: unknown): value is Result<T, E> {
   return value instanceof Ok || value instanceof Err
+}
+
+/**
+ * Normalize a {@link MaybeResult} — a value that may or may not already be a
+ * `Result` — into a `Result`. Bare values are wrapped in `Ok`; `Result`s are
+ * returned by reference (preserving an `Err`'s stack).
+ *
+ * @param value - A `Result`, or a plain value to wrap.
+ * @returns `value` itself when it is a `Result`, otherwise `ok(value)`.
+ * @example
+ * declare const res: MaybeResult<number, ParseError>
+ * result.fromMaybe(res) // Result<number, ParseError>
+ */
+function fromMaybe<M>(value: M): Result<MaybeOkContent<M>, ErrContent<M>> {
+  return isResult<MaybeOkContent<M>, ErrContent<M>>(value)
+    ? value
+    : ok(value as MaybeOkContent<M>)
 }
 
 /**
@@ -199,6 +217,7 @@ export default {
   asIs,
   all,
   isResult,
+  fromMaybe,
   panic,
   panicSync,
   panicAsync,

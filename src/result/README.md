@@ -103,6 +103,9 @@ import { result } from 'always-panic'
 - **`result.all([...])`** — combine sync `Result`s into
   `Result<[values], E>`; short-circuits on the first `Err` by array order.
 - **`result.isResult(value)`** — runtime guard: `value instanceof Ok | Err`.
+- **`result.fromMaybe(value)`** — normalize a `MaybeResult<T, E>` (a value
+  that may or may not already be a `Result`): a `Result` is returned by
+  reference, anything else is wrapped in `Ok`.
 - **`result.gen(body)`** (and `genSync` / `genAsync`) — early return via
   `yield*`; see above.
 - **`result.asIs(res)`** — identity helper that widens a merged union like
@@ -171,6 +174,7 @@ export type {
   ErrContent,
   DeepReadonly,
   MaybeResult,
+  MaybeOkContent,
   ResultOkTypes,
   ResultErrTypes,
   AsyncResultOkTypes,
