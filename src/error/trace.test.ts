@@ -10,23 +10,13 @@ enum AErrorCode {
   FAIL = 100,
 }
 
-class AError<C extends AErrorCode> extends TypedError<C> {
-  constructor(code: C, message: string) {
-    super(code, message)
-    this.name = 'AError'
-  }
-}
+class AError<C extends AErrorCode> extends TypedError<C> {}
 
 enum BErrorCode {
   KNOWN_UPSTREAM = 200,
 }
 
 class BError<C extends BErrorCode> extends TypedError<C> {
-  constructor(code: C, message: string) {
-    super(code, message)
-    this.name = 'BError'
-  }
-
   static override fromAny(e: unknown) {
     if (e instanceof Error && e.message === 'known upstream failure') {
       return new BError(BErrorCode.KNOWN_UPSTREAM, e.message)

@@ -28,11 +28,6 @@ export enum ExampleMathErrorCode {
 export class ExampleMathError<
   C extends ExampleMathErrorCode,
 > extends TypedError<C> {
-  constructor(code: C, message: string) {
-    super(code, message)
-    this.name = 'ExampleMathError'
-  }
-
   static override fromAny(e: unknown) {
     // general error mapping
     if (e instanceof Error) {
