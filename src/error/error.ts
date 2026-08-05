@@ -21,11 +21,7 @@ export class UnexpectedError<
   C extends UnexpectedErrorCode,
 > extends TypedError<C> {
   protected causeForUnwrap = true
-
-  constructor(code: C, message: string) {
-    super(code, message)
-    this.name = 'UnexpectedError'
-  }
+  override name = 'UnexpectedError'
 
   static override fromAny(e: unknown) {
     const err = new UnexpectedError(

@@ -1,6 +1,6 @@
 {
   "name": "always-panic",
-  "version": "0.8.5",
+  "version": "0.9.0",
   "description": "Typed errors and Rust-style Result types for TypeScript.",
   "author": "xkatianx",
   "sideEffects": false,
@@ -41,7 +41,6 @@
     "check:write": "biome check --write",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "verify:build": "bun run build && git diff --exit-code -- dist",
     "prepublishOnly": "bun run build",
     "prepare": "husky"
   },

@@ -33,17 +33,24 @@ Panics (or throws from `unwrap`) belong at boundaries where failure was never a 
 
 `Result<T, E>` is either `Ok<T>` or `Err<E>`. Public APIs should constrain `E` to your domain `TypedError` subclasses — the errors callers are meant to handle.
 
-- Create values with `ok(value)` and `err(error)`.
+- Create values with `ok(value)` and `err(error)`; `ok()` with no argument is `Ok(undefined)`, the success case of a `Result<void, E>`.
+- Normalize a value that may or may not already be a `Result` with `result.fromMaybe`.
 - Narrow with `isOk()` / `isErr()`, or chain with `map`, `andThen`, `orElse`, and the rest of the Rust-aligned combinators.
 - Combine sync results with `result.all`, which short-circuits on the first `Err` by array order.
+- Chain many fallible steps with `result.gen`, where `yield*` is the equivalent of Rust's `?` operator: it evaluates to the `Ok` value or short-circuits the body with the first `Err`. Sync generator in, `Result` out; async generator in, `AsyncResult` out (and `yield*` accepts `AsyncResult`s directly).
 
 `AsyncResult<T, E>` is the same idea for async code: `await` yields a `Result`. `AsyncResult.all` fails fast by completion time (an `Err` resolves the outer result; only a winning promise rejection rejects). `AsyncResult.merge` waits for every input to settle as a `Result`, then returns the first `Err` by array order — but an underlying promise rejection still rejects the merge.
 
 ## Typed errors (`TypedError`)
 
-Expected failures carry a numeric `code` (enum), a `message`, and optional `info`. Subclass `TypedError` for your domain.
+Expected failures carry a numeric `code` (enum), a `message`, and an `info` payload. Subclass `TypedError` for your domain — keep the class generic in its code (`class XError<C extends XErrorCode = XErrorCode> extends TypedError<C>`) so factories and `fromAny` produce narrowly-typed errors and each function's error union advertises exactly the codes it can produce. `name` is set from the class name automatically; an info map as the second type parameter (`TypedError<C, XErrorInfoMap>`) types `info` per code and makes the constructor require `info` exactly when the map entry is not `undefined`-able.
 
 Typed errors are the `E` in `Result<T, E>` on **exported** functions — they are what callers match on, log, and map.
+
+Callers have two tools, both exhaustiveness-friendly:
+
+- **`YourError.is(e, ...codes)`** — a type guard. With no codes it narrows `unknown` to the class (splitting a mixed-class union); with codes it also narrows `code` and `info`, so checking for one specific failure needs no cast. On a distributed union a fully matched member is subtracted in the false branch, so recovering one code inside `orElse` (`is(e, SOME_CODE) ? ok(fallback) : err(e)`) trims that code from the resulting error union.
+- **`YourError.match(e, handlers)`** — exhaustively maps an error to a value, one handler per code, each handler receiving `code` and `info` narrowed to its branch. Exhaustiveness is keyed on the value's static type, not the class's full enum: when an upstream function starts producing a new code, every downstream `match` without an `else` handler fails to compile, naming exactly the missing code. This is how a downstream package that maps upstream errors into its own domain errors stays in sync as upstream evolves. Recovery composes with `orElse`: recover a code by returning `ok(fallback)`, keep the rest by returning `err(e)` in their own handlers — recovered codes are erased from the resulting error union.
 
 If a caller unwraps an `Err(TypedError)`, the bug is almost always at **that call site**: they treated an expected failure as impossible. The error itself is already the origin, so there is no need to attach a long `cause` chain when unwrapping.
 
@@ -147,6 +154,7 @@ For **expected** failures, handle the `Err` explicitly instead of unwrapping.
 
 ## Further reading
 
-- [README](README.md) — install, quick start, method tables
+- [README](README.md) — install, quick start, typed errors
+- [Result guide](src/result/README.md) — `Result` / `AsyncResult` method tables and the `result` namespace, standalone from typed errors
 - [API reference](https://xkatianx.github.io/always-panic/)
 - [Example: math](https://github.com/xkatianx/always-panic/blob/main/src/error/example/math.ts) — `.try()`, `mapErr`, `result.panic`, promoting `UNKNOWN` to typed errors

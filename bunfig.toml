@@ -1,4 +1,7 @@
 [test]
 coverage = true
 coverageSkipTestFiles = true
-coverageThreshold = 1
+# function threshold is below 1 because bun counts the implicit default
+# constructor of every constructor-less class as a function that can never
+# be hit, and TypedError subclasses must not declare constructors
+coverageThreshold = { line = 1, function = 0.9 }

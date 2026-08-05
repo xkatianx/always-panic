@@ -1,6 +1,12 @@
 import { describe, expect, expectTypeOf, it, mock } from 'bun:test'
 import { UnexpectedError, UnexpectedErrorCode } from '../../error/index.js'
-import { type DeepReadonly, err, ok, type Result } from '../index.js'
+import {
+  type DeepReadonly,
+  err,
+  type MaybeResult,
+  ok,
+  type Result,
+} from '../index.js'
 import AsyncResult from './asyncResult.js'
 import Err from './err.js'
 import Ok from './ok.js'
@@ -848,6 +854,13 @@ describe('utils', () => {
       expect(result.unwrap()).toBe(t1)
       expectTypeOf(result).toEqualTypeOf<Result<T1, never>>()
     })
+
+    it('should create an Ok(undefined) with type Result<void, never> when called with no argument', () => {
+      const result = ok()
+      expect(result.isOk()).toBe(true)
+      expect(result.unwrap()).toBeUndefined()
+      expectTypeOf(result).toEqualTypeOf<Result<void, never>>()
+    })
   })
 
   describe('err', () => {
@@ -907,6 +920,54 @@ describe('utils', () => {
         expectTypeOf(value).toEqualTypeOf<null | T1 | T2>()
         expect.unreachable()
       }
+    })
+  })
+
+  describe('fromMaybe', () => {
+    it('should wrap a bare value in Ok', () => {
+      const result = util.fromMaybe(t1)
+      expectTypeOf(result).toEqualTypeOf<Result<T1, never>>()
+      expect(result).toEqual(ok(t1))
+    })
+
+    it('should return a Result by reference', () => {
+      {
+        const input = ok(t3) as Result<T3, T4>
+        const result = util.fromMaybe(input)
+        expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T3, T4>>()
+        expect(result).toBe(input)
+      }
+      {
+        const input = err(t4) as Result<T3, T4>
+        const result = util.fromMaybe(input)
+        expect(result).toBe(input)
+      }
+    })
+
+    it('should normalize a MaybeResult union', () => {
+      {
+        const value = t1 as MaybeResult<T1, T2>
+        const result = util.fromMaybe(value)
+        expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T1, T2>>()
+        expect(result).toEqual(ok(t1))
+      }
+      {
+        const value = err(t2) as MaybeResult<T1, T2>
+        const result = util.fromMaybe(value)
+        expect(result).toEqual(err(t2))
+      }
+    })
+
+    it('should keep bare and Ok members of a mixed union in the Ok type', () => {
+      const value = t1 as T1 | Result<T3, T4>
+      const result = util.fromMaybe(value)
+      expectTypeOf(util.asIs(result)).toEqualTypeOf<Result<T1 | T3, T4>>()
+      expect(result).toEqual(ok(t1))
+    })
+
+    it('should wrap undefined and null in Ok', () => {
+      expect(util.fromMaybe(undefined)).toEqual(ok(undefined))
+      expect(util.fromMaybe(null)).toEqual(ok(null))
     })
   })
 

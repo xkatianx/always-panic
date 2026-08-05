@@ -1,4 +1,5 @@
 import { err, ok } from '../index.js'
+import type Err from './err.js'
 import type {
   AsyncResultErrTypes,
   AsyncResultOkTypes,
@@ -89,6 +90,16 @@ class AsyncResult<T, E> {
       if (r.isErr()) await fn(r.error as DeepReadonly<E>)
       return r
     })
+  }
+
+  /**
+   * Enables `yield* asyncRes` inside an async `result.gen` / `result.genAsync`
+   * body: awaits the underlying `Result`, then behaves like its sync
+   * counterpart — evaluates to the `Ok` value or short-circuits the body with
+   * the `Err`. Equivalent to `yield* (await asyncRes)`.
+   */
+  async *[Symbol.asyncIterator](): AsyncGenerator<Err<E>, T> {
+    return yield* await this.promise
   }
 
   /**

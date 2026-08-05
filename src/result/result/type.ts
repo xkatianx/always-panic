@@ -22,6 +22,13 @@ export type ResultLike<R> = Result<OkContent<R>, ErrContent<R>>
 
 export type MaybeResult<T, E = unknown> = T | Result<T, E>
 
+/**
+ * The `Ok` payload a {@link MaybeResult} normalizes to: the `Ok` content of any
+ * `Result` member, and the value itself for any bare member.
+ */
+export type MaybeOkContent<M> =
+  M extends Result<unknown, unknown> ? OkContent<M> : M
+
 export type ResultOkTypes<T extends Result<unknown, unknown>[]> = {
   [key in keyof T]: T[key] extends Result<unknown, unknown>
     ? OkContent<T[key]>
@@ -237,4 +244,16 @@ export interface ResultBase<T, E> {
    * @see {@link https://doc.rust-lang.org/std/result/enum.Result.html#method.inspect_err | Result::inspect_err}
    */
   inspectErr(fn: (error: DeepReadonly<E>) => void): this
+
+  /**
+   * Enables `yield* res` inside a `result.gen` body — the equivalent of Rust's
+   * [`?` operator](https://doc.rust-lang.org/std/result/index.html#the-question-mark-operator-).
+   *
+   * On `Ok`, `yield*` produces no yields and evaluates to the contained value.
+   * On `Err`, it yields the `Err` itself, which the surrounding
+   * `result.gen` / `genSync` / `genAsync` driver returns by reference
+   * (short-circuiting the rest of the body). Not meant to be iterated by
+   * anything other than those drivers.
+   */
+  [Symbol.iterator](): Generator<Err<E>, T>
 }
