@@ -58,3 +58,43 @@ jobs:
 
       - name: Test
         run: bun test
+
+  # Compile the type tests and a downstream consumer against every supported
+  # TypeScript. `dist` is a build artifact (gitignored), so build it first with
+  # the project's own compiler — those are the declarations that actually ship —
+  # then swap in the matrix version and type-check the source and the consumer
+  # against it.
+  typescript-compat:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Floor (see README "TypeScript support"), a recent 5.x, the 6.x line,
+        # and the 7.x native port. No upper bound is promised, so track latest.
+        typescript: ['5.3.3', '5.9.3', '6.0.3', '7.0.2']
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build shipped declarations (project compiler)
+        run: bun run build
+
+      - name: Pin TypeScript ${{ matrix.typescript }}
+        run: bun add --dev typescript@${{ matrix.typescript }}
+
+      - name: Type tests (source + expectTypeOf assertions)
+        run: bun run typecheck
+
+      - name: Consumer types vs shipped dist (nodenext / node16 / bundler)
+        run: bun run test:compat:check

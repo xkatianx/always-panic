@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // `esnext` rather than `preserve`: `preserve` needs TypeScript >= 5.4 and
+    // this config has to load on the 5.3 floor.
+    "module": "esnext",
+    "moduleResolution": "bundler"
+  }
+}

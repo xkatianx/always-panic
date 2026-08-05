@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": [],
+    "noEmit": true,
+    // Check the shipped .d.ts files themselves rather than trusting them.
+    "skipLibCheck": false
+  },
+  "files": ["smoke.ts"]
+}
