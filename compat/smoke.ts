@@ -130,8 +130,25 @@ const panicked = result.panic(parse('1'))
 const awaited: Result<number, ParseError> = await AsyncResult.from(parse('1'))
 void awaited
 
-// `const` type parameters infer a tuple, not `unknown[]`. This is the check
-// that fails on TypeScript < 5.3 and sets the supported floor.
+// `orElse` of two different Ok payloads, then `andThen` on a shared field.
+// TypeScript 5.3 leaks `OkContent<R>` into the callback (`g.x` fails); 5.4
+// is the support floor because of this chain.
+type RowA = { x: string; kind: 'a' }
+type RowB = { x: string; kind: 'b' }
+declare const rowA: RowA
+declare const rowB: RowB
+function maybeRow<T>(row: T | undefined) {
+  return ok(row).andThen((v) =>
+    v !== undefined ? ok(v) : err(new Error('empty')),
+  )
+}
+const orElseAndThen = result.asIs(
+  maybeRow(rowA)
+    .orElse(() => maybeRow(rowB))
+    .andThen((g) => ok(g.x)),
+)
+
+// `const` type parameters infer a tuple, not `unknown[]` (fails on TS < 5.3).
 const allSync = result.all([ok(1), ok('two')])
 const allAsync = await AsyncResult.all([
   AsyncResult.from(ok(1)),
@@ -143,7 +160,9 @@ const merged = await AsyncResult.merge([
 ])
 
 export type Assertions = [
-  // Tuple inference (the floor check).
+  // Floor check: orElse of distinct Ok types then andThen on a shared field.
+  Expect<Equal<typeof orElseAndThen, Result<string, Error>>>,
+  // Tuple inference (const type parameters, TS 5.3+).
   Expect<Equal<typeof allSync, Result<[number, string], never>>>,
   Expect<Equal<typeof allAsync, Result<[number, string], never>>>,
   Expect<Equal<typeof merged, Result<[number, string], never>>>,
