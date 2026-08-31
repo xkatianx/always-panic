@@ -33,6 +33,13 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      # TypeDoc 0.28 still needs the JS compiler API; TypeScript 7 (native) does
+      # not expose it (`SyntaxKind.PropertyDeclaration` is undefined). Pin 6.x
+      # only for this job — lift when TypeDoc supports 7.
+      # https://github.com/TypeStrong/typedoc/issues/3098
+      - name: Pin TypeScript 6 for TypeDoc
+        run: bun add --dev typescript@6.0.3
+
       - name: Generate docs site
         run: bun run docs
 
