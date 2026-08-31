@@ -14,16 +14,17 @@ Requires a modern ESM runtime (Node.js 18+, Bun, Deno, etc.). Zero runtime depen
 
 ### TypeScript support
 
-**Requires TypeScript 5.3 or newer. There is no upper bound** — 6.x and 7.x (the native port) are both supported.
+**Requires TypeScript 5.4 or newer. There is no upper bound** — 6.x and 7.x (the native port) are both supported.
 
 | TypeScript | Status |
 | --- | --- |
 | ≤ 5.2 | Not supported — `result.all` and `AsyncResult.all` infer `unknown[]` instead of a tuple |
-| 5.3 and newer | Supported, including 6.x and 7.x |
+| 5.3 | Not supported — `orElse` of two different Ok payloads then `andThen` leaks `OkContent<R>` into the callback |
+| 5.4 and newer | Supported, including 6.x and 7.x |
 
-5.3 is the floor because the tuple inference these APIs rely on (`const` type parameters) only became reliable in that release.
+5.4 is the floor because chaining `orElse` across distinct Ok types, then `andThen` on a shared field, only infers correctly from that release. (`const` type parameters for `result.all` arrived in 5.3, but that is no longer the limiting check.)
 
-Every pull request runs a CI matrix over TypeScript 5.3 (the floor), 5.9, 6.0, and 7.0: on each version it compiles the full type test suite and a downstream consumer against the shipped `.d.ts` under `nodenext`, `node16`, and `bundler` resolution, with `strict` and `skipLibCheck: false`. Locally, `bun run test:compat` runs the consumer checks against your installed TypeScript.
+Every pull request runs a CI matrix over TypeScript 5.4 (the floor), 5.9, 6.0, and 7.0: on each version it compiles the full type test suite and a downstream consumer against the shipped `.d.ts` under `nodenext`, `node16`, and `bundler` resolution, with `strict` and `skipLibCheck: false`. Locally, `bun run test:compat` runs the consumer checks against your installed TypeScript.
 
 API reference: [https://xkatianx.github.io/always-panic/](https://xkatianx.github.io/always-panic/)
 

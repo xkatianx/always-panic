@@ -71,7 +71,7 @@ jobs:
       matrix:
         # Floor (see README "TypeScript support"), a recent 5.x, the 6.x line,
         # and the 7.x native port. No upper bound is promised, so track latest.
-        typescript: ['5.3.3', '5.9.3', '6.0.3', '7.0.2']
+        typescript: ['5.4.5', '5.9.3', '6.0.3', '7.0.2']
     steps:
       - name: Checkout PR head
         uses: actions/checkout@v5
